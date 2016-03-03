@@ -1,4 +1,5 @@
 import znc
+import collections
 
 class userips(znc.Module):
     module_types = [znc.CModInfo.GlobalModule]
@@ -13,20 +14,17 @@ class userips(znc.Module):
     def OnWebRequest(self, sock, page, tmpl):
 
         users = znc.CZNC.Get().GetUserMap()
+        ordered_users = collections.OrderedDict(sorted(users.items()))
 
-        for user in users.items():
+        for user in ordered_users.items():
             row = tmpl.AddRow("UserLoop")
             row["User"] = user[0]
 
-            net = user[1].FindNetwork("Snoonet")
-            try:
-                clients = net.GetClients()
-                out = ''
-                for client in clients:
-                    out += client.GetRemoteIP() + ' '
+            user_clients = user[1].GetAllClients()
+            ip_string = ''
+            for client in user_clients:
+                ip_string += client.GetRemoteIP() + ' '
 
-                row["IP"] = out
-            except AttributeError:
-                row["IP"] = "Network Not Found"
+            row["IP"] = ip_string
 
         return True
