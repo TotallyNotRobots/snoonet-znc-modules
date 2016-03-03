@@ -1,0 +1,22 @@
+<? INC Header.tmpl ?>
+
+<div class="toptable">
+	<table class="data">
+		<thead>
+			<tr>
+				<td>User</td>
+				<td>IP(s)</td>
+			</tr>
+		</thead>
+		<tbody>
+			<? LOOP UserLoop ?>
+			<tr class="<? IF __EVEN__ ?>evenrow<? ELSE ?>oddrow<? ENDIF ?>">
+				<td><? VAR User ?></td>
+				<td><? VAR IP DEFAULT="Not Connected" ?></td>
+			</tr>
+			<? ENDLOOP ?>
+		</tbody>
+	</table>
+</div>
+
+<? INC Footer.tmpl ?>
