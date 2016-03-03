@@ -1,3 +1,5 @@
+# INCOMPATIBLE WITH ZNC 1.6.0 AND EARLIER
+
 import znc
 import collections
 
