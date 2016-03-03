@@ -18,7 +18,7 @@ class userips(znc.Module):
             row = tmpl.AddRow("UserLoop")
             row["User"] = user[0]
 
-            net = user[1].FindNetwork("freenode")
+            net = user[1].FindNetwork("Snoonet")
             try:
                 clients = net.GetClients()
                 out = ''
