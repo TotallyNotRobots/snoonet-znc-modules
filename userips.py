@@ -26,7 +26,7 @@ class userips(znc.Module):
                     out += client.GetRemoteIP() + ' '
 
                 row["IP"] = out
-            except:
+            except AttributeError:
                 row["IP"] = "Network Not Found"
 
         return True
