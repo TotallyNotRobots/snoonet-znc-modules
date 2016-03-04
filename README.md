@@ -1,6 +1,6 @@
-## ZNC User IP Web Viewer
+## ZNC IP View
 
-`ZNC User IP Web Viewer` is a global ZNC module written in both C++ and Python (requires [modpython](http://wiki.znc.in/Modpython)).
+`IP View` is a global ZNC module written in both C++ and Python (requires [modpython](http://wiki.znc.in/Modpython)).
 
 ### Installing
 
