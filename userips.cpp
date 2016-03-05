@@ -1,3 +1,5 @@
+/* Requires GCC 4.7+ */
+
 #include <znc/User.h>
 #include <znc/znc.h>
 
