@@ -1,6 +1,6 @@
 ## ZNC User IPs
 
-`User IPs` is a global ZNC module written in both C++ and Python (requires [modpython](http://wiki.znc.in/Modpython)).
+`User IPs` is a global ZNC module written in both C++ (requires GCC 4.7+) and Python (requires [modpython](http://wiki.znc.in/Modpython)).
 
 ### Installing
 
