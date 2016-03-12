@@ -57,6 +57,6 @@ The both the C++ and Python modules can be loaded as a global module in the weba
 
 Modules can also be loaded from within an IRC connection established to ZNC using `/znc loadmod userips`
 
-### Accessing
+### Usage
 
 The module can be accessed from the ZNC webadmin by going to `User IPs` under `Global Modules`
