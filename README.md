@@ -1,41 +1,54 @@
 # Snoonet ZNC Modules
 
+- [Setup](#setup)
 - [CheckMod](#checkmod)
+- [CheckNetwork](#checknetwork)
 - [ForceChan](#forcechan)
 - [UserIPs](#userips)
 
 ---
 
+### Setup
+
+#### About
+
+Modules are global ZNC modules written Python (requires [modpython](http://wiki.znc.in/Modpython)) that checks that a module is loaded for all users.
+
+#### Installing
+
+Place `module.py` in `~/.znc/modules`. `userips.py` also requires the `userips` folder in the same location.
+
+#### Loading
+
+All modules are written in Python (requires [modpython](http://wiki.znc.in/Modpython)). Modules can be loaded with `/znc loadmod <module>`
+
+---
+
 ## CheckMod
 
-`checkmod` is a global ZNC module written Python (requires [modpython](http://wiki.znc.in/Modpython)) that checks that a module is loaded for all users.
-
-### Installing
-
-Place `checkmod.py` in `~/.znc/modules`.
-
-### Loading
-
-`checkmod.py` requires that `modpython` be loaded first in either the webadmin or with `/znc loadmod modpython`. `checkmod` can then be loaded the same way.
+Checks that a module is loaded for all users or a network for all users.
 
 ### Usage
 
 `/msg *checkmod checkusermod <module>` will output `*controlpanel LoadModule` command for all users who do not have the module enabled
+
 `/msg *checkmod checknetmod <module> <network>` will output `*controlpanel LoadNetModule` for all users who do not have the module enabled on the specified network
+
+---
+
+## CheckNetwork
+
+Checks that a network is configured for all users.
+
+### Usage
+
+`/msg *checknetwork <module>` will output all users who do not have the specified network configured
 
 ---
 
 ## ForceChan
 
-`forcechan` is a global ZNC module written Python (requires [modpython](http://wiki.znc.in/Modpython)) that prevents a user from parting a channel.
-
-### Installing
-
-Place `forcechan.py` in `~/.znc/modules`.
-
-### Loading
-
-`forcechan` requires that `modpython` be loaded first in either the webadmin or with `/znc loadmod modpython`. `forcechan` can then be loaded the same way.
+Prevents a user from parting a channel.
 
 ### Usage
 
@@ -45,17 +58,7 @@ Place `forcechan.py` in `~/.znc/modules`.
 
 ## UserIPs
 
-`User IPs` is a global ZNC module written in both C++ (requires GCC 4.7+) and Python (requires [modpython](http://wiki.znc.in/Modpython)).
-
-### Installing
-
-Place `userips.py` in `~/.znc/modules`, along with the `userips` folder.
-
-### Loading
-
-The both the C++ and Python modules can be loaded as a global module in the webadmin panel. Loading the Python version requires `modpython` be loaded first.
-
-Modules can also be loaded from within an IRC connection established to ZNC using `/znc loadmod userips`
+Provides a web-interface for viewing IP addresses of connected users
 
 ### Usage
 
