@@ -32,6 +32,9 @@ class forcechan(znc.Module):
                     net.AddChan(channel, True)
 
     def OnModCommand(self, command):
-        if command.split()[0] == "forcechan":
-            self.forceChan()
-            self.PutModule("All users on network " + network + " forced into channel " + channel)
+        if self.GetUser().IsAdmin():
+            if command.split()[0] == "forcechan":
+                self.forceChan()
+                self.PutModule("All users on network " + network + " forced into channel " + channel)
+        else:
+            self.PutModule("Access denied.")
