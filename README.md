@@ -21,7 +21,7 @@ Place `checkmod.py` in `~/.znc/modules`.
 ### Usage
 
 `/msg *checkmod checkusermod <module>` will output `*controlpanel LoadModule` command for all users who do not have the module enabled
-`/msg *checkmod checknetmod <module> <network>` will output `*controlpanel LoadNetModule` for all users who do not have the module enabled on the given network
+`/msg *checkmod checknetmod <module> <network>` will output `*controlpanel LoadNetModule` for all users who do not have the module enabled on the specified network
 
 ---
 
