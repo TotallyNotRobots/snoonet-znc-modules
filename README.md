@@ -1,8 +1,7 @@
 # Snoonet ZNC Modules
 
 - [Setup](#setup)
-- [CheckMod](#checkmod)
-- [CheckNetwork](#checknetwork)
+- [CheckConfig](#checkconfig)
 - [ForceChan](#forcechan)
 - [UserIPs](#userips)
 
