@@ -21,6 +21,10 @@ Place `module.py` in `~/.znc/modules`. `userips.py` also requires the `userips` 
 
 All modules are written in Python (requires [modpython](http://wiki.znc.in/Modpython)). Modules can be loaded with `/znc loadmod <module>`
 
+#### Accessing
+
+All commands should be sent to `*checkconfig` as a private message
+
 ---
 
 ## CheckConfig
@@ -29,11 +33,13 @@ Checks that various options are configured for all users.
 
 ### Usage
 
-`/msg *checkconfig <network>` will output all users who do not have the specified network configured
+`checknetwork <network>` will output all users who do not have the specified network configured
 
-`/msg *checkconfig checkusermod <module>` will output `*controlpanel LoadModule` command for all users who do not have the module enabled
+`checkchan <network> <channel>` will output all users who do not have the specified channel in the given network
 
-`/msg *checkconfig checknetmod <module> <network>` will output `*controlpanel LoadNetModule` for all users who do not have the module enabled on the specified network
+`checkusermod <module>` will output `*controlpanel LoadModule` command for all users who do not have the module enabled
+
+`checknetmod <module> <network>` will output `*controlpanel LoadNetModule` for all users who do not have the module enabled on the specified network
 
 ---
 
