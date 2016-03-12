@@ -1,5 +1,22 @@
 # Snoonet ZNC Modules
 
+## CheckMod
+
+`checkmod` is a global ZNC module written Python (requires [modpython](http://wiki.znc.in/Modpython)) that checks that a module is loaded for all users.
+
+### Installing
+
+Place `checkmod.py` in `~/.znc/modules`.
+
+### Loading
+
+`checkmod.py` requires that `modpython` be loaded first in either the webadmin or with `/znc loadmod modpython`. `checkmod` can then be loaded the same way.
+
+### Usage
+
+`/msg *checkmod checkusermod <module>` will output load command for all users who do not have the module enabled
+`/msg *checkmod checknetmod <module> <network>` will output load command for all users who do not have the module enabled on the given network
+
 ## ForceChan
 
 `forcechan` is a global ZNC module written Python (requires [modpython](http://wiki.znc.in/Modpython)) that prevents a user from parting a channel.
