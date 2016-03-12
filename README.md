@@ -49,7 +49,7 @@ Place `forcechan.py` in `~/.znc/modules`.
 
 ### Installing
 
-Place either `userips.cpp` or `userips.py` in `~/.znc/modules`, along with the `userips` folder. The C++ version must be built from source, using `znc-buidmod userips.cpp`. Python modules do not require compilation.
+Place `userips.py` in `~/.znc/modules`, along with the `userips` folder.
 
 ### Loading
 
