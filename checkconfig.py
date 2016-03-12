@@ -6,17 +6,20 @@ class checkconfig(znc.Module):
 
     def CheckNetwork(self, network):
         users = znc.CZNC.Get().GetUserMap()
+        count = 0
         for user in users.items():
 
             net = user[1].FindNetwork(network)
 
             if not net:
                 self.PutModule("AddNetwork " + user[0] + " " + network)
+                count += 1
 
-        self.PutModule("Network check complete for network " + network)
+        self.PutModule("Network check complete for network " + network + " (" + str(count) + " missing)")
 
     def CheckChan(self, network, channel):
         users = znc.CZNC.Get().GetUserMap()
+        count = 0
         for user in users.items():
 
             net = user[1].FindNetwork(network)
@@ -25,11 +28,13 @@ class checkconfig(znc.Module):
                 chan = net.FindChan(channel)
                 if not chan:
                     self.PutModule("AddChan " + user[0] + " " + network + " " + channel)
+                    count += 1
 
-        self.PutModule("Channel check complete for channel " + channel + " in network " + network)
+        self.PutModule("Channel check complete for channel " + channel + " in network " + network + " (" + str(count) + " missing)")
 
     def CheckUserModule(self, module):
         users = znc.CZNC.Get().GetUserMap()
+        count = 0
         for user in users.items():
 
             loaded_user_mods = []
@@ -38,11 +43,13 @@ class checkconfig(znc.Module):
 
             if module not in loaded_user_mods:
                 self.PutModule("LoadModule " + user[0] + " " + module)
+                count += 1
 
-        self.PutModule("User module check complete for module " + module)
+        self.PutModule("User module check complete for module " + module + " (" + str(count) + " missing)")
 
     def CheckNetworkModule(self, network, module):
         users = znc.CZNC.Get().GetUserMap()
+        count = 0
         for user in users.items():
 
             net = user[1].FindNetwork(network)
@@ -54,8 +61,9 @@ class checkconfig(znc.Module):
 
                 if module not in loaded_net_mods:
                     self.PutModule("LoadNetModule " + user[0] + " " + network + " " + module)
+                    count += 1
 
-        self.PutModule("Network module check complete for module " + module + " in network " + network)
+        self.PutModule("Network module check complete for module " + module + " in network " + network + " (" + str(count) + " missing)")
 
     def OnModCommand(self, command):
         if self.GetUser().IsAdmin():
