@@ -4,7 +4,9 @@ network = "Snoonet"
 channel = "##bnc"
 part = "PART " + channel
 
+
 class forcechan(znc.Module):
+
     module_types = [znc.CModInfo.GlobalModule]
     description = "Forces users to remain in the configured channel"
 
@@ -35,6 +37,7 @@ class forcechan(znc.Module):
         if self.GetUser().IsAdmin():
             if command.split()[0] == "forcechan":
                 self.force_chan()
-                self.PutModule("All users on network " + network + " forced into channel " + channel)
+                self.PutModule("All users on network " + network +
+                               " forced into channel " + channel)
         else:
             self.PutModule("Access denied.")
