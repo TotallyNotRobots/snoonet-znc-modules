@@ -23,13 +23,13 @@ class userips(znc.Module):
 
             user_clients = user[1].GetAllClients()
             ip_string = ''
+            if user_clients:
+                user_count += 1
             for client in user_clients:
                 ip_string += client.GetRemoteIP() + ' '
                 connection_count +=1
 
             row["IP"] = ip_string
-
-            user_count += 1
 
         row = tmpl.AddRow("UserLoop")
         row["User"] = "Total"
