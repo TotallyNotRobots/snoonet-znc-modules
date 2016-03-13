@@ -4,7 +4,7 @@ class checkconfig(znc.Module):
     module_types = [znc.CModInfo.GlobalModule]
     description = "Checks that a module is loaded for a user"
 
-    def CheckNetwork(self, network):
+    def check_network(self, network):
         users = znc.CZNC.Get().GetUserMap()
         count = 0
         for user in users.items():
@@ -17,7 +17,7 @@ class checkconfig(znc.Module):
 
         self.PutModule("Network check complete for network " + network + " (" + str(count) + " missing)")
 
-    def CheckChan(self, network, channel):
+    def check_chan(self, network, channel):
         users = znc.CZNC.Get().GetUserMap()
         count = 0
         for user in users.items():
@@ -32,7 +32,7 @@ class checkconfig(znc.Module):
 
         self.PutModule("Channel check complete for channel " + channel + " in network " + network + " (" + str(count) + " missing)")
 
-    def CheckUserModule(self, module):
+    def check_user_module(self, module):
         users = znc.CZNC.Get().GetUserMap()
         count = 0
         for user in users.items():
@@ -47,7 +47,7 @@ class checkconfig(znc.Module):
 
         self.PutModule("User module check complete for module " + module + " (" + str(count) + " missing)")
 
-    def CheckNetworkModule(self, network, module):
+    def check_network_module(self, network, module):
         users = znc.CZNC.Get().GetUserMap()
         count = 0
         for user in users.items():
@@ -68,12 +68,12 @@ class checkconfig(znc.Module):
     def OnModCommand(self, command):
         if self.GetUser().IsAdmin():
             if command.split()[0] == "checknetwork":
-                self.CheckNetwork(command.split()[1])
+                self.check_network(command.split()[1])
             elif command.split()[0] == "checkchan":
-                self.CheckChan(command.split()[1], command.split()[2])
+                self.check_chan(command.split()[1], command.split()[2])
             elif command.split()[0] == "checkusermod":
-                self.CheckUserModule(command.split()[1])
+                self.check_user_module(command.split()[1])
             elif command.split()[0] == "checknetmod":
-                self.CheckNetworkModule(command.split()[1], command.split()[2])
+                self.check_network_module(command.split()[1], command.split()[2])
         else:
             self.PutModule("Access denied.")
