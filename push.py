@@ -120,7 +120,7 @@ class push(znc.Module):
                 if command.split()[1] == "list":
                     try:
                         if self.nv['highlight']:
-                            self.PutModule("Highlight list: " + self.nv['highlight'])
+                            self.PutModule("Highlight list: " + (self.nv['highlight'])[1:])
                         else:
                             self.PutModule("Highlight list empty.")
                     except:
@@ -163,13 +163,13 @@ class push(znc.Module):
                         except:
                             self.PutModule("You must specify a single highlight word to delete.")
                 else:
-                    self.PutModule("Invalid option. Options are 'add' and 'del'. See " + help_url)
+                    self.PutModule("Invalid option. Options are 'list', 'add', and 'del'. See " + help_url)
 
         elif command.split()[0] == "ignore":
                 if command.split()[1] == "list":
                     try:
                         if self.nv['ignore']:
-                            self.PutModule("Ignore list: " + self.nv['ignore'])
+                            self.PutModule("Ignore list: " + (self.nv['ignore'])[1:])
                         else:
                             self.PutModule("Ignore list empty.")
                     except:
@@ -212,7 +212,7 @@ class push(znc.Module):
                         except:
                             self.PutModule("You must specify a single ignore nick to delete.")
                 else:
-                    self.PutModule("Invalid option. Options are 'add' and 'del'. See " + help_url)
+                    self.PutModule("Invalid option. Options are 'list', 'add', and 'del'. See " + help_url)
 
         elif command.split()[0] == "test":
             data = dict(type='note', title="Test Message", body="This is a test message.")
