@@ -6,7 +6,7 @@ help_url = "https://snoonet.org/push"
 class push(znc.Module):
 
     module_types = [znc.CModInfo.NetworkModule]
-    description = "PushBullet module for BNC"
+    description = "PushBullet notifications"
 
     def OnLoad(self, args, message):
         return True
