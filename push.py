@@ -28,10 +28,12 @@ class push(znc.Module):
                     self.check_send(channel, nick, message)
 
     def OnChanNotice(self, nick, channel, message):
+        user_nick = self.GetNetwork().GetIRCNick().GetNick()
+        msg = (message.s).lower()
         try:
-            user_nick = self.GetNetwork().GetIRCNick().GetNick()
-            msg = (message.s).lower()
-            if (any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg) and not (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+            if (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                pass
+            elif any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
                 self.check_send(channel, nick, message)
         except:
             try:
@@ -43,17 +45,10 @@ class push(znc.Module):
 
     def OnPrivMsg(self, nick, message):
         try:
-            user_nick = self.GetNetwork().GetIRCNick().GetNick()
-            msg = (message.s).lower()
-            if (any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg) and not (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
-                self.check_send(channel, nick, message)
+            if (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                pass
         except:
-            try:
-                if any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
-                    self.check_send(channel, nick, message)
-            except:
-                if user_nick.lower() in msg:
-                    self.check_send(channel, nick, message)
+            self.check_send(None, nick, message)
 
     def OnPrivNotice(self, nick, message):
         try:
@@ -80,12 +75,21 @@ class push(znc.Module):
             pass
 
     def send_message(self, channel, nick, message):
+        ttl = ''
         if channel:
             msg = channel.GetName() + " <" + nick.GetNick() + "> " + message.s
+            ttl = 'Highlight'
         else:
             msg = "<" + nick.GetNick() + "> " + message.s
+            ttl = 'Private Message'
 
-        data = dict(type = 'note', title = msg, body = msg)
+        try:
+            if self.nv['private'] == 'no':
+                ttl = msg
+        except:
+            pass
+
+        data = dict(type = 'note', title = ttl, body = msg)
         requests.post('https://api.pushbullet.com/v2/pushes', auth = (self.nv['token'],''), data = data)
 
     def OnModCommand(self, command):
@@ -98,15 +102,15 @@ class push(znc.Module):
                     except:
                         self.nv['token'] = ''
                         self.PutModule("Token cleared.")
-                elif command.split()[1] == "away_only":
+                elif command.split()[1] == "away_only" or command.split()[1] == "private":
                     try:
                         if command.split()[2] == "yes" or command.split()[2] == "no":
-                            self.nv['away_only'] = command.split()[2]
-                            self.PutModule("Away option set successfully.")
+                            self.nv[command.split()[1]] = command.split()[2]
+                            self.PutModule(command.split()[1] + " option set to " + command.split()[2])
                         else:
-                            self.PutModule("You must speficy either \'yes\' or \'no\'.")
+                            self.PutModule("You must speciy either \'yes\' or \'no\'.")
                     except:
-                        self.PutModule("You must speficy either \'yes\' or \'no\'.")
+                        self.PutModule("You must specify either \'yes\' or \'no\'.")
                 else:
                     self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
             except:
