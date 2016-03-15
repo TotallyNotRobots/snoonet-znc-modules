@@ -72,7 +72,7 @@ class push(znc.Module):
                 except:
                     self.send_message(channel, nick, message)
         except:
-            self.PutModule("Exception.")
+            pass
 
     def send_message(self, channel, nick, message):
         ttl = ''
