@@ -12,31 +12,72 @@ class push(znc.Module):
         return True
 
     def OnChanMsg(self, nick, channel, message):
-        if any(word in message.s for word in self.nv['highlight'].split(',')) or self.GetNetwork().GetIRCNick().GetNick() in message.s:
-            self.check_send(channel, nick, message)
+        user_nick = self.GetNetwork().GetIRCNick().GetNick()
+        msg = (message.s).lower()
+        try:
+            if (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                pass
+            elif any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
+                self.check_send(channel, nick, message)
+        except:
+            try:
+                if any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
+            except:
+                if user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
 
     def OnChanNotice(self, nick, channel, message):
-        if any(word in message.s for word in self.nv['highlight'].split(',')) or self.GetNetwork().GetIRCNick().GetNick() in message.s:
-            self.check_send(channel, nick, message)
+        try:
+            user_nick = self.GetNetwork().GetIRCNick().GetNick()
+            msg = (message.s).lower()
+            if (any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg) and not (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                self.check_send(channel, nick, message)
+        except:
+            try:
+                if any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
+            except:
+                if user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
 
     def OnPrivMsg(self, nick, message):
-        self.check_send(None, nick, message)
+        try:
+            user_nick = self.GetNetwork().GetIRCNick().GetNick()
+            msg = (message.s).lower()
+            if (any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg) and not (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                self.check_send(channel, nick, message)
+        except:
+            try:
+                if any(word.lower() in msg for word in (self.nv['highlight']).split(',')) or user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
+            except:
+                if user_nick.lower() in msg:
+                    self.check_send(channel, nick, message)
 
     def OnPrivNotice(self, nick, message):
-        self.check_send(None, nick, message)
+        try:
+            if not (nick.GetNick()).lower() in map(str.lower, (self.nv['ignore']).split(',')):
+                self.check_send(None, nick, message)
+        except:
+            self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
-        if self.nv['token']:
-            if not self.nv['away_only'] or self.nv['away_only'] == "no":
-                self.send_message(channel, nick, message)
-            elif self.nv['away_only'] == "yes":
-                away = True
-                for client in self.GetNetwork().GetClients():
-                    if not client.IsAway():
-                        away =  False
-                        break
-                if away:
+        try:
+            if self.nv['token']:
+                try:
+                    if self.nv['away'] == yes:
+                        away = True
+                        for client in self.GetNetwork().GetClients():
+                            if not client.IsAway():
+                                away =  False
+                                break
+                        if away:
+                            self.send_message(channel, nick, message)
+                except:
                     self.send_message(channel, nick, message)
+        except:
+            pass
 
     def send_message(self, channel, nick, message):
         if channel:
@@ -44,7 +85,7 @@ class push(znc.Module):
         else:
             msg = "<" + nick.GetNick() + "> " + message.s
 
-        data = dict(type='note', title=msg, body=msg)
+        data = dict(type = 'note', title = msg, body = msg)
         requests.post('https://api.pushbullet.com/v2/pushes', auth = (self.nv['token'],''), data = data)
 
     def OnModCommand(self, command):
@@ -70,6 +111,7 @@ class push(znc.Module):
                     self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
             except:
                 self.PutModule("You must specify a configuration option. See " + help_url)
+
         elif command.split()[0] == "highlight":
                 if command.split()[1] == "list":
                     try:
@@ -83,7 +125,7 @@ class push(znc.Module):
                     try:
                         list = self.nv['highlight'].split(',')
                         if command.split()[2] not in list:
-                            list.append(command.split()[2])
+                            list.append((command.split()[2]).lower())
                             joined = ','.join(list)
                             self.nv['highlight'] = joined
                             self.PutModule(command.split()[2] + " added to highlight list.")
@@ -91,7 +133,7 @@ class push(znc.Module):
                             self.PutModule(command.split()[2] + " already in highlight list.")
                     except:
                         try:
-                            self.nv['highlight'] = command.split()[2]
+                            self.nv['highlight'] = (command.split()[2]).lower()
                             self.PutModule(command.split()[2] + " added to highlight list.")
                         except:
                             self.PutModule("You must specify a single highlight word to add.")
@@ -99,8 +141,8 @@ class push(znc.Module):
                     try:
                         if self.nv['highlight']:
                             list = self.nv['highlight'].split(',')
-                            if command.split()[2] in list:
-                                list.remove(command.split()[2])
+                            if (command.split()[2]).lower() in list:
+                                list.remove((command.split()[2]).lower())
                                 joined = ','.join(list)
                                 self.nv['highlight'] = joined
                                 self.PutModule(command.split()[2] + " deleted from highlight list.")
@@ -118,9 +160,63 @@ class push(znc.Module):
                             self.PutModule("You must specify a single highlight word to delete.")
                 else:
                     self.PutModule("Invalid option. Options are 'add' and 'del'. See " + help_url)
+
+        elif command.split()[0] == "ignore":
+                if command.split()[1] == "list":
+                    try:
+                        if self.nv['ignore']:
+                            self.PutModule("Ignore list: " + self.nv['ignore'])
+                        else:
+                            self.PutModule("Ignore list empty.")
+                    except:
+                        self.PutModule("Ignore list empty.")
+                elif command.split()[1] == "add":
+                    try:
+                        list = self.nv['ignore'].split(',')
+                        if command.split()[2] not in list:
+                            list.append((command.split()[2]).lower())
+                            joined = ','.join(list)
+                            self.nv['ignore'] = joined
+                            self.PutModule(command.split()[2] + " added to ignore list.")
+                        else:
+                            self.PutModule(command.split()[2] + " already in ignore list.")
+                    except:
+                        try:
+                            self.nv['ignore'] = (command.split()[2]).lower()
+                            self.PutModule(command.split()[2] + " added to ignore list.")
+                        except:
+                            self.PutModule("You must specify a single ignore nick to add.")
+                elif command.split()[1] == "del":
+                    try:
+                        if self.nv['ignore']:
+                            list = self.nv['ignore'].split(',')
+                            if (command.split()[2]).lower() in list:
+                                list.remove((command.split()[2]).lower())
+                                joined = ','.join(list)
+                                self.nv['ignore'] = joined
+                                self.PutModule(command.split()[2] + " deleted from ignore list.")
+                            else:
+                                self.PutModule(command.split()[2] + " not in ignore list.")
+                        else:
+                            self.PutModule("Ignore list empty.")
+                    except:
+                        try:
+                            if not command.split()[2]:
+                                self.PutModule("You must specify a single ignore nick to delete.")
+                            else:
+                                self.PutModule("Ignore list empty.")
+                        except:
+                            self.PutModule("You must specify a single ignore nick to delete.")
+                else:
+                    self.PutModule("Invalid option. Options are 'add' and 'del'. See " + help_url)
+
         elif command.split()[0] == "test":
             data = dict(type='note', title="Test Message", body="This is a test message.")
             requests.post('https://api.pushbullet.com/v2/pushes', auth = (self.nv['token'],''), data = data)
             self.PutModule("Test message successfully sent.")
+
+        elif command.split()[0] == "help":
+            self.PutModule("Instructions can be found at " + help_url)
+
         else:
             self.PutModule("Invalid command. See " + help_url)
