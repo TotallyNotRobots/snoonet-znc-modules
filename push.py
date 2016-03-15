@@ -59,7 +59,7 @@ class push(znc.Module):
 
     def check_send(self, channel, nick, message):
         try:
-            if self.nv['token']:
+            if self.nv['state'] == "on":
                 try:
                     if self.nv['away'] == yes:
                         away = True
@@ -72,7 +72,7 @@ class push(znc.Module):
                 except:
                     self.send_message(channel, nick, message)
         except:
-            pass
+            self.PutModule("Exception.")
 
     def send_message(self, channel, nick, message):
         ttl = ''
@@ -93,15 +93,41 @@ class push(znc.Module):
         requests.post('https://api.pushbullet.com/v2/pushes', auth = (self.nv['token'],''), data = data)
 
     def OnModCommand(self, command):
-        if command.split()[0] == "set":
+        if command.split()[0] == "enable" or command.split()[0] == "disable":
+            if command.split()[0] == "enable":
+                try:
+                    if self.nv['token']:
+                        self.nv['state'] = "on"
+                        self.PutModule("Notifications enabled.")
+                    else:
+                        self.PutModule("You must set a token before enabling notifications.")
+                except:
+                    self.PutModule("You must set a token before enabling notifications.")
+            elif command.split()[0] == "disable":
+                self.nv['state'] = "off"
+                self.PutModule("Notifications disabled.")
+
+        elif command.split()[0] == "set":
             try:
                 if command.split()[1] == "token":
                     try:
-                        self.nv['token'] = command.split()[2]
-                        self.PutModule("Token set successfully.")
+                        if self.nv['state'] == 'on':
+                            self.PutModule("You must disable notifications before changing your token.")
+                        else:
+                            try:
+                                self.nv['token'] = command.split()[2]
+                                self.PutModule("Token set successfully.")
+                            except:
+                                self.nv['token'] = ''
+                                self.PutModule("Token cleared.")
                     except:
-                        self.nv['token'] = ''
-                        self.PutModule("Token cleared.")
+                        try:
+                            self.nv['token'] = command.split()[2]
+                            self.PutModule("Token set successfully.")
+                        except:
+                            self.nv['token'] = ''
+                            self.PutModule("Token cleared.")
+
                 elif command.split()[1] == "away_only" or command.split()[1] == "private":
                     try:
                         if command.split()[2] == "yes" or command.split()[2] == "no":
@@ -116,101 +142,53 @@ class push(znc.Module):
             except:
                 self.PutModule("You must specify a configuration option. See " + help_url)
 
-        elif command.split()[0] == "highlight":
+        elif command.split()[0] == "highlight" or command.split()[0] == "ignore":
+                cmd = command.split()[0]
                 if command.split()[1] == "list":
                     try:
-                        if self.nv['highlight']:
-                            self.PutModule("Highlight list: " + (self.nv['highlight'])[1:])
+                        if self.nv[cmd]:
+                            self.PutModule(cmd.title() + " list: " + (self.nv[cmd])[1:])
                         else:
-                            self.PutModule("Highlight list empty.")
+                            self.PutModule(cmd.title() + " list empty.")
                     except:
-                        self.PutModule("Highlight list empty.")
+                        self.PutModule(cmd.title() + " list empty.")
                 elif command.split()[1] == "add":
                     try:
-                        list = self.nv['highlight'].split(',')
+                        list = self.nv[cmd].split(',')
                         if command.split()[2] not in list:
                             list.append((command.split()[2]).lower())
                             joined = ','.join(list)
-                            self.nv['highlight'] = joined
-                            self.PutModule(command.split()[2] + " added to highlight list.")
+                            self.nv[cmd] = joined
+                            self.PutModule(command.split()[2] + " added to " + cmd + " list.")
                         else:
-                            self.PutModule(command.split()[2] + " already in highlight list.")
+                            self.PutModule(command.split()[2] + " already in " + cmd + " list.")
                     except:
                         try:
-                            self.nv['highlight'] = (command.split()[2]).lower()
-                            self.PutModule(command.split()[2] + " added to highlight list.")
+                            self.nv[cmd] = (command.split()[2]).lower()
+                            self.PutModule(command.split()[2] + " added to " + cmd + " list.")
                         except:
-                            self.PutModule("You must specify a single highlight word to add.")
+                            self.PutModule("You must specify a single word or nick to add.")
                 elif command.split()[1] == "del":
                     try:
-                        if self.nv['highlight']:
-                            list = self.nv['highlight'].split(',')
+                        if self.nv[cmd]:
+                            list = self.nv[cmd].split(',')
                             if (command.split()[2]).lower() in list:
                                 list.remove((command.split()[2]).lower())
                                 joined = ','.join(list)
-                                self.nv['highlight'] = joined
-                                self.PutModule(command.split()[2] + " deleted from highlight list.")
+                                self.nv[cmd] = joined
+                                self.PutModule(command.split()[2] + " deleted from " + cmd + " list.")
                             else:
-                                self.PutModule(command.split()[2] + " not in highlight list.")
+                                self.PutModule(command.split()[2] + " not in " + cmd + " list.")
                         else:
-                            self.PutModule("Highlight list empty.")
+                            self.PutModule(cmd.title() + " list empty.")
                     except:
                         try:
                             if not command.split()[2]:
-                                self.PutModule("You must specify a single highlight word to delete.")
+                                self.PutModule("You must specify a single word or nick to delete.")
                             else:
-                                self.PutModule("Highlight list empty.")
+                                self.PutModule(cmd.title() + " list empty.")
                         except:
-                            self.PutModule("You must specify a single highlight word to delete.")
-                else:
-                    self.PutModule("Invalid option. Options are 'list', 'add', and 'del'. See " + help_url)
-
-        elif command.split()[0] == "ignore":
-                if command.split()[1] == "list":
-                    try:
-                        if self.nv['ignore']:
-                            self.PutModule("Ignore list: " + (self.nv['ignore'])[1:])
-                        else:
-                            self.PutModule("Ignore list empty.")
-                    except:
-                        self.PutModule("Ignore list empty.")
-                elif command.split()[1] == "add":
-                    try:
-                        list = self.nv['ignore'].split(',')
-                        if command.split()[2] not in list:
-                            list.append((command.split()[2]).lower())
-                            joined = ','.join(list)
-                            self.nv['ignore'] = joined
-                            self.PutModule(command.split()[2] + " added to ignore list.")
-                        else:
-                            self.PutModule(command.split()[2] + " already in ignore list.")
-                    except:
-                        try:
-                            self.nv['ignore'] = (command.split()[2]).lower()
-                            self.PutModule(command.split()[2] + " added to ignore list.")
-                        except:
-                            self.PutModule("You must specify a single ignore nick to add.")
-                elif command.split()[1] == "del":
-                    try:
-                        if self.nv['ignore']:
-                            list = self.nv['ignore'].split(',')
-                            if (command.split()[2]).lower() in list:
-                                list.remove((command.split()[2]).lower())
-                                joined = ','.join(list)
-                                self.nv['ignore'] = joined
-                                self.PutModule(command.split()[2] + " deleted from ignore list.")
-                            else:
-                                self.PutModule(command.split()[2] + " not in ignore list.")
-                        else:
-                            self.PutModule("Ignore list empty.")
-                    except:
-                        try:
-                            if not command.split()[2]:
-                                self.PutModule("You must specify a single ignore nick to delete.")
-                            else:
-                                self.PutModule("Ignore list empty.")
-                        except:
-                            self.PutModule("You must specify a single ignore nick to delete.")
+                            self.PutModule("You must specify a single word or nick to delete.")
                 else:
                     self.PutModule("Invalid option. Options are 'list', 'add', and 'del'. See " + help_url)
 
