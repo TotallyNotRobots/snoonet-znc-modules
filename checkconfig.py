@@ -75,6 +75,27 @@ class checkconfig(znc.Module):
                        " in network " + network +
                        " (" + str(count) + " missing)")
 
+    def uncheck_network_module(self, network, module):
+        users = znc.CZNC.Get().GetUserMap()
+        count = 0
+        for user in users.items():
+
+            net = user[1].FindNetwork(network)
+
+            if net:
+                loaded_net_mods = []
+                for mod in net.GetModules():
+                    loaded_net_mods.append(mod.GetModName())
+
+                if module in loaded_net_mods:
+                    self.PutModule("UnLoadNetModule " + user[0] +
+                                   " " + network + " " + module)
+                    count += 1
+
+        self.PutModule("Network module check complete for module " + module +
+                       " in network " + network +
+                       " (" + str(count) + " loaded)")
+
     def OnModCommand(self, command):
         if self.GetUser().IsAdmin():
             if command.split()[0] == "checknetwork":
@@ -86,6 +107,9 @@ class checkconfig(znc.Module):
                 self.check_user_module(command.split()[1])
             elif command.split()[0] == "checknetmod":
                 self.check_network_module(command.split()[1],
+                                          command.split()[2])
+            elif command.split()[0] == "unchecknetmod":
+                self.uncheck_network_module(command.split()[1],
                                           command.split()[2])
         else:
             self.PutModule("Access denied.")
