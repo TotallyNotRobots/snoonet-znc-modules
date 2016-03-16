@@ -3,6 +3,7 @@
 - [Setup](#setup)
 - [CheckConfig](#checkconfig)
 - [ForceChan](#forcechan)
+- [Push](#push)
 - [UserIPs](#userips)
 
 ---
@@ -50,6 +51,16 @@ Prevents a user from parting a channel.
 ### Usage
 
 `/msg *forcechan forcechan` will force users into the preconfigured channel
+
+---
+
+## Push
+
+Sends push notifications to users on mention or PM via PushBullet
+
+### Usage
+
+See [Snoonet BNC Push Notifications](https://snoonet.org/push) for instructions and setup
 
 ---
 
