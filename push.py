@@ -29,7 +29,7 @@ class push(znc.Module):
         try:
             if self.nv['state'] == "on":
                 try:
-                    if self.nv['away'] == yes:
+                    if self.nv['away_only'] == "yes":
                         away = True
                         for client in self.GetNetwork().GetClients():
                             if not client.IsAway():
@@ -37,31 +37,50 @@ class push(znc.Module):
                                 break
                         if away:
                             self.check_contents(channel, nick, message)
+                    else:
+                        self.check_contents(channel, nick, message)
                 except:
                     self.check_contents(channel, nick, message)
         except:
             pass
 
     def check_contents(self, channel, nick, message):
+
+        my_nick = (self.GetNetwork().GetIRCNick().GetNick()).lower()
+        sender_nick = (nick.GetNick()).lower()
+        ignored = False
+        highlighed = False
+
+        try:
+            for ignored_user in json.loads(self.nv['ignore']):
+                if sender_nick == ignored_user:
+                    ignored = True
+                    break
+        except:
+            pass
+
         if channel:
-            user_nick = self.GetNetwork().GetIRCNick().GetNick()
-            msg = (message.s).lower()
-            try:
-                if not (nick.GetNick()).lower() in json.loads(self.nv['ignore']):
-                    if any(word.lower() in msg for word in json.loads(self.nv['highlight'])) or user_nick.lower() in msg:
-                        self.send_message(channel, nick, message)
-            except:
-                try:
-                    if any(word.lower() in msg for word in json.loads(self.nv['highlight'])) or user_nick.lower() in msg:
-                        self.send_message(channel, nick, message)
-                except:
-                    if user_nick.lower() in msg:
-                        self.send_message(channel, nick, message)
+            msg = ((message.s).lower()).split()
+
+            if not ignored:
+                for word in msg:
+                    if word == my_nick:
+                        highlighted = True
+                        break
+                    else:
+                        try:
+                            for highlight_word in json.loads(self.nv['highlight']):
+                                if highlight_word == word:
+                                    highlighted = True
+                                    break
+                        except:
+                            pass
+
+            if highlighted and not ignored:
+                self.send_message(channel, nick, message)
+
         else:
-            try:
-                if not (nick.GetNick()).lower() in json.loads(self.nv['ignore']):
-                    self.send_message(None, nick, message)
-            except:
+            if not ignored:
                 self.send_message(None, nick, message)
 
     def send_message(self, channel, nick, message):
