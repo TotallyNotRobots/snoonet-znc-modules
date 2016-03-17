@@ -30,12 +30,7 @@ class push(znc.Module):
             if self.nv['state'] == "on":
                 try:
                     if self.nv['away_only'] == "yes":
-                        away = True
-                        for client in self.GetNetwork().GetClients():
-                            if not client.IsAway():
-                                away = False
-                                break
-                        if away:
+                        if self.GetNetwork().IsIRCAway():
                             self.check_contents(channel, nick, message)
                     else:
                         self.check_contents(channel, nick, message)
