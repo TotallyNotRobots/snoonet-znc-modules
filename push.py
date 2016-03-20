@@ -23,7 +23,8 @@ class push(znc.Module):
         self.check_send(None, nick, message)
 
     def OnPrivNotice(self, nick, message):
-        self.check_send(None, nick, message)
+        if not (message.s).startswith("***"):
+            self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
         try:
