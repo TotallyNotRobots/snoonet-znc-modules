@@ -1,0 +1,22 @@
+<? INC Header.tmpl ?>
+
+<div class="toptable">
+        <table class="data">
+                <thead>
+                        <tr>
+                                <td>Statistic</td>
+                                <td>Value</td>
+                        </tr>
+                </thead>
+                <tbody>
+                        <? LOOP StatsLoop ?>
+                        <tr class="<? IF __EVEN__ ?>evenrow<? ELSE ?>oddrow<? ENDIF ?>">
+                                <td><? VAR Statistic DEFAULT="0" ?></td>
+                                <td><?VAR Value DEFAULT="0" ?></td>
+                        </tr>
+                        <? ENDLOOP ?>
+                </tbody>
+        </table>
+</div>
+
+<? INC Footer.tmpl ?>
