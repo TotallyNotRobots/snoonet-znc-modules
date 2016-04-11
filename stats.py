@@ -16,23 +16,34 @@ class stats(znc.Module):
     def OnWebRequest(self, sock, page, tmpl):
 
         stats = collections.OrderedDict()
-        stats['User Count'] = 0
-        stats['Online Count'] = 0
-        stats['Offline Count'] = 0
-        stats['Connection Count'] = 0
+        stats['Users'] = 0
+        stats['Online'] = 0
+        stats['Offline'] = 0
+        stats['Connections'] = 0
+        stats['Networks'] = 0
+        stats['Channels'] = 0
 
         users = znc.CZNC.Get().GetUserMap()
 
         for user in users.items():
-            stats['User Count'] += 1
+            stats['Users'] += 1
 
             user_clients = user[1].GetAllClients()
             if user_clients:
-                stats['Online Count'] += 1
+                stats['Online'] += 1
             else:
-                 stats['Offline Count'] += 1
+                 stats['Offline'] += 1
             for client in user_clients:
-                stats['Connection Count'] += 1
+                stats['Connections'] += 1
+
+            nets = user[1].GetNetworks()
+            for net in nets:
+                stats['Networks'] += 1
+
+                chans = net.GetChans()
+                for chan in chans:
+                    stats['Channels'] += 1
+
 
         for k,v in stats.items():
             row = tmpl.AddRow("StatsLoop")
