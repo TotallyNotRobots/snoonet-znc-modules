@@ -1,0 +1,11 @@
+					<div id="breadcrumb">
+						<a href="<? VAR URIPrefix TOP ?>/">Snoonet BNC</a>
+						<? LOOP BreadCrumbs ?>
+							<b>»</b>
+							<? IF URL ?>
+								<a href="<? VAR URIPrefix TOP ?><? VAR URL ?>"><? VAR Text ?></a>
+							<? ELSE ?>
+								<? VAR Text ?>
+							<? ENDIF ?>
+						<? ENDLOOP ?>
+					</div>

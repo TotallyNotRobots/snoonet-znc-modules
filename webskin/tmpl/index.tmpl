@@ -1,0 +1,18 @@
+<? INC Header.tmpl ?>
+
+<div class="textsection">
+
+	<p>Welcome to the <a href="https://snoonet.org/bnc">Snoonet BNC</a> web interface!</p>
+	<p>If you need assistance, please see our <a href="https://snoonet.org/help">help page</a> or ask us in our <a href="https://webchat.snoonet.org/help">#help webchat</a>.</p>
+	<?IF LoggedIn ?>
+		<?IF !GlobalModLoop ?>
+			<?IF !UserModLoop ?>
+				<p>No Web-enabled modules have been loaded. Load modules from IRC ("<code>/msg *status help</code>" and
+					"<code>/msg *status loadmod &lt;module&gt;</code>"). Once you have loaded some Web-enabled modules, the menu will expand.</p>
+			<? ENDIF ?>
+		<? ENDIF ?>
+	<? ENDIF ?>
+
+</div>
+
+<? INC Footer.tmpl ?>
