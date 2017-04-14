@@ -13,10 +13,8 @@ class akill(znc.Module):
 
     def OnUserRaw(self, linecs):
         line = linecs.s.split()
-        if line[0] != "PING":
-            self.PutModNotice(str(line))
         if line[0] == "akill":
-            if len(line) < 3:
+            if len(line) < 4:
                 # too short, respond with error as a notice
                 self.PutModNotice("Usage: /akill nick/mask time(In days) reason [nick to address]")
                 return znc.HALT
@@ -34,7 +32,7 @@ class akill(znc.Module):
                     elif reason == "given":
                         self.ownmsg(time, nick, address)
 
-                elif len(line) == 4:
+                else:
                     nick, time, reason = line[1], line[2], line[3].lower()
                     if line[3][0] == "#":
                         self.evasion(time, nick, reason, nick)
@@ -47,10 +45,12 @@ class akill(znc.Module):
                     else:
                         self.PutModNotice("Unknown option, valid options are #channel, netban, spam and given (set the "
                                           "entire message")
+            else:
+                self.PutModNotice("Usage: /akill nick/mask time(In days) reason [nick to address]")
             return znc.HALT
 
     def evasion(self, time, nick, chan, address):
-        self.PutModNotice(
+        self.PutIRC(
             "PRIVMSG OperServ :akill add +{time}d {nick} {address}: {time} day network ban for ban "
             "evasion in {channel}. Further violations of our network rules will result in an increase "
             "in ban length and may become permanent. https://snoonet.org/rules".format(
@@ -59,7 +59,7 @@ class akill(znc.Module):
         )
 
     def netban(self, time, nick, address):
-        self.PutModNotice(
+        self.PutIRC(
             "PRIVMSG OperServ :akill add +{time}d {nick} {address}: {time} day network ban for evasion "
             "of a network ban. Further violations of our network rules will result in an increase "
             "in ban length and may become permanent. https://snoonet.org/rules".format(
@@ -68,7 +68,7 @@ class akill(znc.Module):
         )
 
     def spam(self, time, nick, address):
-        self.PutModNotice(
+        self.PutIRC(
             "PRIVMSG OperServ :akill add +{time}d {nick} {address}: {time} day network ban for spam."
             " Further violations of our network rules will result in an increase "
             "in ban length and may become permanent. https://snoonet.org/rules".format(
@@ -77,6 +77,6 @@ class akill(znc.Module):
         )
 
     def ownmsg(self, time, nick, reason):
-        self.PutModNotice("PRIVMSG OperServ :akill add +{time}d {nick} {reason} ".format(
+        self.PutIRC("PRIVMSG OperServ :akill add +{time}d {nick} {reason} ".format(
             time=time, nick=nick, reason=reason
         ))
