@@ -21,8 +21,9 @@ class akill(znc.Module):
 
             elif line[3][0] == "#" or line[3] in self.reasons:
                 if len(line) > 4:
-                    nick, time, reason, address = line[1], line[2], line[
-                        3].lower(), " ".join(line[4:])
+                    _, nick, time, reason, *address = line
+                    reason = reason.lower()
+                    address = " ".join(address)
                     if line[3][0] == "#":
                         self.evasion(time, nick, reason, address)
                     elif reason == "netban":
