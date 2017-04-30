@@ -85,4 +85,6 @@ class akill(znc.Module):
 
     def send_usage(self):
         self.PutModNotice("Usage: /akill nick/mask time(In days) "
-                          "reason [nick to address]")
+                          "reason(Valid reasons are a channel name, spam, "
+                          "netban and given. You specify the full message" 
+                          "with given) [nick to address]")
