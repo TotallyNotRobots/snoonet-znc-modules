@@ -11,6 +11,9 @@ class akill(znc.Module):
     reasons = ["netban", "spam", "given"]
     akill_format = "PRIVMSG OperServ :AKILL ADD +{duration} {mask} {reason}"
     echo_format = "AKILL ADD +{duration} {mask} {reason}"
+    end_text = " Further violations of our network rules will result in an " \
+               "increase in ban length and may become permanent. " \
+               "https://snoonet.org/rules"
 
     def OnUserRaw(self, linecs):
         line = linecs.s.split()
@@ -45,28 +48,21 @@ class akill(znc.Module):
 
     def evasion(self, time, nick, chan, address):
         reason = "{address}: {htime}network ban for ban evasion in " \
-                 "{channel}. Further violations of our network rules will " \
-                 "result in an increase in ban length and may become " \
-                 "permanent. https://snoonet.org/rules".format(
+                 "{channel}.".format(
                     address=address, htime=self.human_time(time), channel=chan)
-        self.do_akill(nick, time, reason)
+        self.do_akill(nick, time, reason + self.end_text)
 
     def netban(self, time, nick, address):
         reason = "{address}: {htime}network ban for evasion of a " \
-                 "network ban. Further violations of our network rules will " \
-                 "result in an increase in ban length and may become " \
-                 "permanent. https://snoonet.org/rules".format(
+                 "network ban.".format(
                     address=address, htime=self.human_time(time))
-        self.do_akill(nick, time, reason)
+        self.do_akill(nick, time, reason + self.end_text)
 
     def spam(self, time, nick, address):
-        reason = "{address}: {htime}network ban for spam. Further " \
-                 "violations of our network rules will result in an " \
-                 "increase in ban length and may become permanent. " \
-                 "https://snoonet.org/rules".format(
+        reason = "{address}: {htime}network ban for spam. ".format(
                     address=address, htime=self.human_time(time))
 
-        self.do_akill(nick, time, reason)
+        self.do_akill(nick, time, reason + self.end_text)
 
     def do_akill(self, nick, time, reason):
         self.PutModNotice(
