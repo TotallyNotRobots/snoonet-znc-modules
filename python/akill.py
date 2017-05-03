@@ -10,44 +10,35 @@ class akill(znc.Module):
     module_types = [znc.CModInfo.NetworkModule]
     reasons = ["netban", "spam", "given"]
     akill_format = "PRIVMSG OperServ :AKILL ADD +{duration} {mask} {reason}"
+    echo_format = "AKILL ADD +{duration} {mask} {reason}"
 
     def OnUserRaw(self, linecs):
         line = linecs.s.split()
-        if line[0] == "akill":
+        if line[0].lower() == "akill":
             if len(line) < 4:
                 # too short, respond with error as a notice
                 self.send_usage()
                 return znc.HALT
 
             elif line[3][0] == "#" or line[3] in self.reasons:
-                if len(line) > 4:
-                    _, nick, time, reason, *address = line
-                    reason = reason.lower()
-                    address = " ".join(address)
-                    if line[3][0] == "#":
-                        self.evasion(time, nick, reason, address)
-                    elif reason == "netban":
-                        self.netban(time, nick, address)
-                    elif reason == "spam":
-                        self.spam(time, nick, address)
-                    elif reason == "given":
-                        self.do_akill(nick, time, address)
+                _, nick, time, reason, *address = line
+                reason = reason.lower()
+                address = " ".join(address)
 
-                else:
-                    nick, time, reason = line[1], line[2], line[3].lower()
-                    if line[3][0] == "#":
-                        self.evasion(time, nick, reason, nick)
-                    elif reason == "netban":
-                        self.netban(time, nick, nick)
-                    elif reason == "spam":
-                        self.spam(time, nick, nick)
-                    elif reason == "given":
+                if line[3][0] == "#":
+                    self.evasion(time, nick, reason, address or nick)
+                elif reason == "netban":
+                    self.netban(time, nick, address or nick)
+                elif reason == "spam":
+                    self.spam(time, nick, address or nick)
+                elif reason == "given":
+                    if address:
+                        self.do_akill(nick, time, address)
+                    else:
                         self.PutModNotice(
                             "given requires a reason to be specified")
-                    else:
-                        self.PutModNotice("Unknown option, valid options are "
-                                          "#channel, netban, spam and "
-                                          "given (set the entire message")
+                else:
+                    self.send_usage()
             else:
                 self.send_usage()
             return znc.HALT
@@ -77,6 +68,12 @@ class akill(znc.Module):
         self.do_akill(nick, time, reason)
 
     def do_akill(self, nick, time, reason):
+        
+        self.PutModNotice(
+            self.echo_format.format(duration=str(time) + 'd',
+                                    mask=nick,
+                                    reason=reason)
+        )
         self.PutIRC(
             self.akill_format.format(duration=str(time) + 'd',
                                      mask=nick,
