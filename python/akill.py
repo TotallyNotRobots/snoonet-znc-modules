@@ -44,44 +44,63 @@ class akill(znc.Module):
             return znc.HALT
 
     def evasion(self, time, nick, chan, address):
-        reason = "{address}: {time} day network ban for ban evasion in " \
+        reason = "{address}: {htime}network ban for ban evasion in " \
                  "{channel}. Further violations of our network rules will " \
                  "result in an increase in ban length and may become " \
-                 "permanent. https://snoonet.org/rules".format(address=address,
-                                                               time=time,
-                                                               channel=chan)
+                 "permanent. https://snoonet.org/rules".format(
+                    address=address, htime=self.human_time(time), channel=chan)
         self.do_akill(nick, time, reason)
 
     def netban(self, time, nick, address):
-        reason = "{address}: {time} day network ban for evasion of a " \
+        reason = "{address}: {htime}network ban for evasion of a " \
                  "network ban. Further violations of our network rules will " \
                  "result in an increase in ban length and may become " \
-                 "permanent. https://snoonet.org/rules".format(address=address,
-                                                               time=time)
+                 "permanent. https://snoonet.org/rules".format(
+                    address=address, htime=self.human_time(time))
         self.do_akill(nick, time, reason)
 
     def spam(self, time, nick, address):
-        reason = "{address}: {time} day network ban for spam. Further " \
+        reason = "{address}: {htime}network ban for spam. Further " \
                  "violations of our network rules will result in an " \
                  "increase in ban length and may become permanent. " \
-                 "https://snoonet.org/rules".format(address=address, time=time)
+                 "https://snoonet.org/rules".format(
+                    address=address, htime=self.human_time(time))
+
         self.do_akill(nick, time, reason)
 
     def do_akill(self, nick, time, reason):
-        
         self.PutModNotice(
-            self.echo_format.format(duration=str(time) + 'd',
-                                    mask=nick,
-                                    reason=reason)
+            self.echo_format.format(duration=time, mask=nick, reason=reason)
         )
+
         self.PutIRC(
-            self.akill_format.format(duration=str(time) + 'd',
-                                     mask=nick,
-                                     reason=reason)
+            self.akill_format.format(duration=time, mask=nick, reason=reason)
         )
 
     def send_usage(self):
-        self.PutModNotice("Usage: /akill nick/mask time(In days) "
+        self.PutModNotice("Usage: /akill nick/mask time(defaults to days) "
                           "reason(Valid reasons are a channel name, spam, "
                           "netban and given. You specify the full message" 
                           "with given) [nick to address]")
+
+    @staticmethod
+    def human_time(time: str):
+        timechrs = {
+            "m": " minute ",
+            "h": " hour ",
+            "d": " day ",
+            "w": " week ",
+            "y": " year "
+        }
+        formatted = False
+        e_time = ""
+        for char in time:
+            if char in timechrs:
+                e_time += timechrs[char]
+                formatted = True
+            else:
+                e_time += char
+
+        if not formatted:
+            e_time += " day "
+        return e_time
