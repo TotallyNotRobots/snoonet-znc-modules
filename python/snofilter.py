@@ -111,7 +111,7 @@ class snofilter(znc.Module):
             rule_tbl.AddRow()
             rule_tbl.SetCell("Num", str(i))
             rule_tbl.SetCell("Type", settings['type'])
-            rule_tbl.SetCell("Window", settings.get('window', DEFAULT_WINDOW))
+            rule_tbl.SetCell("Window", settings.get('window', 'None'))
             rule_tbl.SetCell("Message Type", settings.get('msg_type', ''))
         self.PutModule(rule_tbl)
 
