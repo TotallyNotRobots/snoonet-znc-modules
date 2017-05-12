@@ -42,7 +42,7 @@ class snofilter(znc.Module):
 
     def handle_snotice(self, snotype, message):
         network = self.GetNetwork()
-        command = ":{window}!snofilter@znc.in {msg_type} {cur_nick} :{message}"
+        command = ":*{window}!snofilter@znc.in {msg_type} {cur_nick} :{message}"
         sno_settings = [s for s in self.sno_settings if s['type'].lower() == snotype.lower()]
         for settings in (sno_settings or [{}]):
             fmt_command = command.format(window=settings.get('window', snotype.lower()),
