@@ -98,6 +98,9 @@ class snofilter(znc.Module):
             self.PutModule("Rule #{} removed".format(num))
 
     def list_rules(self, line):
+        if not self.sno_settings:
+            self.PutModule("No rules configured for server notices")
+            return
         rule_tbl = znc.CTable()
         rule_tbl.AddColumn("Num")
         rule_tbl.AddColumn("Type")
