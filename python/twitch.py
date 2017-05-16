@@ -8,5 +8,5 @@ class twitch(znc.Module):
         self.caps = ["twitch.tv/membership"]
 
     def OnServerCapAvailable(self, cap):
-        return cap.s.lower() in self.caps
+        return str(cap).lower() in self.caps
 
