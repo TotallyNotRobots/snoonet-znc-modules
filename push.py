@@ -33,7 +33,6 @@ class push(znc.Module):
                 self.check_contents(channel, nick, message)
 
     def check_contents(self, channel, nick, message):
-
         my_nick = str(self.GetNetwork().GetCurNick()).lower()
         sender_nick = (nick.GetNick()).lower()
         ignored = any(sender_nick == ignored_user for ignored_user in json.loads(self.nv.get('ignore', "[]")))
@@ -41,12 +40,12 @@ class push(znc.Module):
 
         if channel:
             msg = str(message).lower().split()
-
             if not ignored:
                 for word in msg:
                     if word == my_nick:
                         highlighted = True
                         break
+
                     else:
                         for highlight_word in json.loads(self.nv.get('highlight', "[]")):
                             if highlight_word == word:
@@ -55,7 +54,6 @@ class push(znc.Module):
 
             if highlighted and not ignored:
                 self.send_message(channel, nick, message)
-
         else:
             if not ignored:
                 self.send_message(None, nick, message)
@@ -82,11 +80,13 @@ class push(znc.Module):
 
         if len(command) >= 2:
             cmd_option = split_command[1]
+
         else:
             cmd_option = None
 
         if len(command) >= 3:
             cmd_setting = split_command[2]
+
         else:
             cmd_setting = None
 
@@ -94,6 +94,7 @@ class push(znc.Module):
             if self.nv.get('token'):
                 self.nv['state'] = "on"
                 self.PutModule("Notifications \x02enabled\x02.")
+
             else:
                 self.PutModule("You must set a token before enabling notifications.")
 
@@ -107,6 +108,7 @@ class push(znc.Module):
 
                     if self.nv.get('state', "") == 'on':
                         self.PutModule("You must disable notifications before changing your token.")
+
                     else:
                         if cmd_option:
                             self.nv['token'] = cmd_setting
@@ -124,19 +126,15 @@ class push(znc.Module):
 
                     else:
                         self.PutModule("You must specify either 'yes' or 'no'.")
-
                 else:
                     self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
-
             else:
-                self.PutModule("You must specify a configuration option. See "
-                               + help_url)
-
+                self.PutModule("You must specify a configuration option. See " + help_url)
         elif top_level_cmd in ("highlight", "ignore"):
-
                 if cmd_option == "list":
                     if json.loads(self.nv.get(top_level_cmd, "[]")):
                         self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(json.loads(self.nv[top_level_cmd])) + "\x02")
+
                     else:
                         self.PutModule(top_level_cmd.title() + " list empty.")
 
@@ -152,8 +150,7 @@ class push(znc.Module):
                             self.PutModule("\x02" + cmd_setting + "\x02 added to " + top_level_cmd + " list.")
 
                         else:
-                            self.PutModule("\x02" + cmd_setting +
-                                           "\x02 already in " + top_level_cmd + " list.")
+                            self.PutModule("\x02" + cmd_setting + "\x02 already in " + top_level_cmd + " list.")
                     else:
                         self.PutModule("You must specify a single word or nick to add.")
 
@@ -161,7 +158,6 @@ class push(znc.Module):
                     if cmd_setting:
                         if self.nv.get(top_level_cmd):
                             option_list = json.loads(self.nv[top_level_cmd])
-
                             if cmd_setting.lower() in option_list:
                                 option_list.remove(cmd_setting.lower())
                                 self.nv[top_level_cmd] = json.dumps(option_list)
