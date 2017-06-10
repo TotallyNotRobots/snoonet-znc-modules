@@ -36,20 +36,15 @@ class push(znc.Module):
         sender_nick = (nick.GetNick()).lower()
         ignored = any(sender_nick == ignored_user for ignored_user in json.loads(self.nv.get('ignore', "[]")))
         highlighted = False
+        highlight_words = json.loads(self.nv.get('highlight', "[]"))
 
         if channel:
             msg = str(message).lower().split()
             if not ignored:
                 for word in msg:
-                    if word == my_nick:
+                    if word == my_nick or word in highlight_words:
                         highlighted = True
                         break
-
-                    else:
-                        for highlight_word in json.loads(self.nv.get('highlight', "[]")):
-                            if highlight_word == word:
-                                highlighted = True
-                                break
 
             if highlighted and not ignored:
                 self.send_message(channel, nick, message)
