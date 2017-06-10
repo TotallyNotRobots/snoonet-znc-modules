@@ -174,11 +174,12 @@ class push(znc.Module):
                                    "'add', and 'del'. See " + help_url)
 
         elif top_level_cmd == "test":
-            data = dict(type='note', title="Test Message",
-                        body="This is a test message.")
-            requests.post('https://api.pushbullet.com/v2/pushes', auth=(self.nv['token'], ''), data=data)
-
-            self.PutModule("Test message successfully sent.")
+            if self.nv.get("token"):
+                data = dict(type='note', title="Test Message", body="This is a test message.")
+                requests.post('https://api.pushbullet.com/v2/pushes', auth=(self.nv['token'], ''), data=data)
+                self.PutModule("Test message successfully sent.")
+            else:
+                self.PutModule("You must supply a token before you can test whether or not it works")
 
         elif top_level_cmd == "help":
             self.PutModule("Instructions can be found at " + help_url)
