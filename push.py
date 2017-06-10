@@ -118,45 +118,44 @@ class push(znc.Module):
                 self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
 
         elif top_level_cmd in ("highlight", "ignore"):
-                if cmd_option == "list":
-                    cmd_list = json.loads(self.nv.get(top_level_cmd, "[]"))
-                    if cmd_list:
-                        self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(cmd_list) + "\x02")
+            cmd_list = json.loads(self.nv.get(top_level_cmd, "[]"))
+            if cmd_option == "list":
+                if cmd_list:
+                    self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(cmd_list) + "\x02")
 
+                else:
+                    self.PutModule(top_level_cmd.title() + " list empty.")
+
+            elif cmd_option == "add":
+                if cmd_setting:
+
+                    if cmd_setting.lower() not in cmd_list:
+                        cmd_list.append(cmd_setting.lower())
+                        self.nv[top_level_cmd] = json.dumps(cmd_list)
+                        self.PutModule("\x02" + cmd_setting + "\x02 added to " + top_level_cmd + " list.")
+
+                    else:
+                        self.PutModule("\x02" + cmd_setting + "\x02 already in " + top_level_cmd + " list.")
+                else:
+                    self.PutModule("You must specify a single word or nick to add.")
+
+            elif cmd_option == "del":
+                if cmd_setting:
+                    if cmd_list:
+                        option_list = json.loads(self.nv[top_level_cmd])
+                        if cmd_setting.lower() in option_list:
+                            option_list.remove(cmd_setting.lower())
+                            self.nv[top_level_cmd] = json.dumps(option_list)
+                            self.PutModule("\x02" + cmd_setting + "\x02 deleted from " + top_level_cmd + " list.")
+
+                        else:
+                            self.PutModule("\x02" + cmd_setting + "\x02 not in " + top_level_cmd + " list.")
                     else:
                         self.PutModule(top_level_cmd.title() + " list empty.")
-
-                elif cmd_option == "add":
-                    if cmd_setting:
-                        option_list = json.loads(self.nv.get(top_level_cmd, "[]"))
-                        if cmd_setting.lower() not in option_list:
-                            option_list.append(cmd_setting.lower())
-                            self.nv[top_level_cmd] = json.dumps(option_list)
-                            self.PutModule("\x02" + cmd_setting + "\x02 added to " + top_level_cmd + " list.")
-
-                        else:
-                            self.PutModule("\x02" + cmd_setting + "\x02 already in " + top_level_cmd + " list.")
-                    else:
-                        self.PutModule("You must specify a single word or nick to add.")
-
-                elif cmd_option == "del":
-                    if cmd_setting:
-                        if self.nv.get(top_level_cmd):
-                            option_list = json.loads(self.nv[top_level_cmd])
-                            if cmd_setting.lower() in option_list:
-                                option_list.remove(cmd_setting.lower())
-                                self.nv[top_level_cmd] = json.dumps(option_list)
-                                self.PutModule("\x02" + cmd_setting + "\x02 deleted from " + top_level_cmd + " list.")
-
-                            else:
-                                self.PutModule("\x02" + cmd_setting + "\x02 not in " + top_level_cmd + " list.")
-                        else:
-                            self.PutModule(top_level_cmd.title() + " list empty.")
-                    else:
-                        self.PutModule("You must specify a single word or nick to delete.")
                 else:
-                    self.PutModule("Invalid option. Options are 'list', "
-                                   "'add', and 'del'. See " + help_url)
+                    self.PutModule("You must specify a single word or nick to delete.")
+            else:
+                self.PutModule("Invalid option. Options are 'list', add', and 'del'. See " + help_url)
 
         elif top_level_cmd == "test":
             if self.nv.get("token"):
