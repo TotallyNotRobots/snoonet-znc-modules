@@ -53,7 +53,6 @@ class push(znc.Module):
                 self.send_message(None, nick, message)
 
     def send_message(self, channel, nick, message):
-        ttl = ''
         if channel:
             msg = channel.GetName() + " <" + nick.GetNick() + "> " + message.s
             ttl = 'Highlight'
@@ -158,9 +157,10 @@ class push(znc.Module):
                 self.PutModule("Invalid option. Options are 'list', add', and 'del'. See " + help_url)
 
         elif top_level_cmd == "test":
-            if self.nv.get("token"):
+            token = self.nv.get("token")
+            if token:
                 data = dict(type='note', title="Test Message", body="This is a test message.")
-                requests.post('https://api.pushbullet.com/v2/pushes', auth=(self.nv['token'], ''), data=data)
+                requests.post('https://api.pushbullet.com/v2/pushes', auth=(token, ''), data=data)
                 self.PutModule("Test message successfully sent.")
             else:
                 self.PutModule("You must supply a token before you can test whether or not it works")
