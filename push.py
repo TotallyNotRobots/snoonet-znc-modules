@@ -79,9 +79,9 @@ class push(znc.Module):
         cmd_option = None
         cmd_setting = None
 
-        if len(command) >= 2:
+        if len(split_command) >= 2:
             cmd_option = split_command[1]
-            if len(command) >= 3:
+            if len(split_command) >= 3:
                 cmd_setting = split_command[2]
 
         if top_level_cmd == "enable":
