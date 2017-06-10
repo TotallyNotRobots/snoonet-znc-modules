@@ -129,8 +129,9 @@ class push(znc.Module):
 
         elif top_level_cmd in ("highlight", "ignore"):
                 if cmd_option == "list":
-                    if json.loads(self.nv.get(top_level_cmd, "[]")):
-                        self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(json.loads(self.nv[top_level_cmd])) + "\x02")
+                    cmd_list = json.loads(self.nv.get(top_level_cmd, "[]"))
+                    if cmd_list:
+                        self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(cmd_list) + "\x02")
 
                     else:
                         self.PutModule(top_level_cmd.title() + " list empty.")
