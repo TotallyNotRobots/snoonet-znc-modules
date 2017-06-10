@@ -88,10 +88,16 @@ class push(znc.Module):
     def OnModCommand(self, command):
         split_command = command.split()
         top_level_cmd = split_command[0]
-        if len(command) > 2:
+
+        if len(command) >= 2:
             cmd_option = split_command[1]
-        if len(command) > 3:
+        else:
+            cmd_option = ""
+
+        if len(command) >= 3:
             cmd_setting = split_command[2]
+        else:
+            cmd_setting = ""
 
         if top_level_cmd == "enable":
             if self.nv.get('token'):
@@ -106,8 +112,8 @@ class push(znc.Module):
             self.PutModule("Notifications \x02disabled\x02.")
 
         elif top_level_cmd == "set":
-            if len(command) > 2:
-                if command.split()[1] == "token":
+            if len(command) >= 2:
+                if cmd_option == "token":
 
                     if self.nv.get('state', "") == 'on':
                         self.PutModule("You must disable notifications "
@@ -121,25 +127,16 @@ class push(znc.Module):
                             self.nv['token'] = ''
                             self.PutModule("Token cleared.")
 
-                elif command.split()[1] == "away_only" or \
-                        command.split()[1] == "private":
+                elif cmd_option == "away_only" or cmd_option == "private":
 
-                    try:
-                        if command.split()[2] == "yes" or \
-                                        command.split()[2] == "no":
+                    if cmd_setting == "yes" or cmd_setting == "no":
+                        self.nv[cmd_option] = cmd_setting
+                        self.PutModule(cmd_option + " option set to \x02" +
+                                       command.split()[2] + "\x02")
 
-                            self.nv[command.split()[1]] = command.split()[2]
-                            self.PutModule(command.split()[1] +
-                                           " option set to \x02" +
-                                           command.split()[2] + "\x02")
-
-                        else:
-                            self.PutModule("You must specify either 'yes' "
-                                           "or 'no'.")
-
-                    except:
-                        self.PutModule("You must specify either 'yes' or "
-                                       "'no'.")
+                    else:
+                        self.PutModule(
+                            "You must specify either 'yes' or 'no'.")
 
                 else:
                     self.PutModule("Invalid option. Options are 'token' and "
@@ -149,67 +146,63 @@ class push(znc.Module):
                 self.PutModule("You must specify a configuration option. See "
                                + help_url)
 
-        elif top_level_cmd == "highlight" \
-                or command.split()[0] == "ignore":
+        elif top_level_cmd == "highlight" or top_level_cmd == "ignore":
 
-                cmd = command.split()[0]
                 if command.split()[1] == "list":
-                    try:
-                        if json.loads(self.nv.get(cmd)):
-                            self.PutModule(cmd.title() + " list: \x02" +
-                                           ', '.join(json.loads(self.nv[cmd]))
-                                           + "\x02")
-                        else:
-                            self.PutModule(cmd.title() + " list empty.")
-                    except:
-                        self.PutModule(cmd.title() + " list empty.")
+                    if json.loads(self.nv.get(top_level_cmd, "")):
+                        self.PutModule(top_level_cmd.title() +
+                                       " list: \x02" + ', '.join(
+                                       json.loads(self.nv[top_level_cmd]))
+                                       + "\x02")
+                    else:
+                        self.PutModule(top_level_cmd.title() + " list empty.")
 
                 elif command.split()[1] == "add":
                     try:
-                        list = json.loads(self.nv[cmd])
+                        list = json.loads(self.nv.get(top_level_cmd, ""))
 
                         if (command.split()[2]).lower() not in list:
                             list.append((command.split()[2]).lower())
-                            self.nv[cmd] = json.dumps(list)
+                            self.nv[top_level_cmd] = json.dumps(list)
                             self.PutModule("\x02" + command.split()[2]
-                                           + "\x02 added to " + cmd + " list.")
+                                           + "\x02 added to " + top_level_cmd + " list.")
 
                         else:
                             self.PutModule("\x02" + command.split()[2] +
-                                           "\x02 already in " + cmd + " list.")
+                                           "\x02 already in " + top_level_cmd + " list.")
                     except:
                         try:
                             list = [(command.split()[2]).lower()]
-                            self.nv[cmd] = json.dumps(list)
+                            self.nv[top_level_cmd] = json.dumps(list)
                             self.PutModule("\x02" + command.split()[2] +
-                                           "\x02 added to " + cmd + " list.")
+                                           "\x02 added to " + top_level_cmd + " list.")
                         except:
                             self.PutModule("You must specify a single "
                                            "word or nick to add.")
 
                 elif command.split()[1] == "del":
                     try:
-                        if self.nv[cmd]:
-                            list = json.loads(self.nv[cmd])
+                        if self.nv[top_level_cmd]:
+                            list = json.loads(self.nv[top_level_cmd])
 
                             if (command.split()[2]).lower() in list:
                                 list.remove((command.split()[2]).lower())
-                                self.nv[cmd] = json.dumps(list)
+                                self.nv[top_level_cmd] = json.dumps(list)
                                 self.PutModule("\x02" + command.split()[2] +
                                                "\x02 deleted from " +
-                                               cmd + " list.")
+                                               top_level_cmd + " list.")
                             else:
                                 self.PutModule("\x02" + command.split()[2] +
-                                               "\x02 not in " + cmd + " list.")
+                                               "\x02 not in " + top_level_cmd + " list.")
                         else:
-                            self.PutModule(cmd.title() + " list empty.")
+                            self.PutModule(top_level_cmd.title() + " list empty.")
                     except:
                         try:
                             if not command.split()[2]:
                                 self.PutModule("You must specify a single "
                                                "word or nick to delete.")
                             else:
-                                self.PutModule(cmd.title() + " list empty.")
+                                self.PutModule(top_level_cmd.title() + " list empty.")
                         except:
                             self.PutModule("You must specify a single word "
                                            "or nick to delete.")
