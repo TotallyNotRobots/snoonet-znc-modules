@@ -129,9 +129,6 @@ class push(znc.Module):
                 elif cmd_option == "add":
                     if cmd_setting:
                         option_list = json.loads(self.nv.get(top_level_cmd, "[]"))
-                        if not option_list:
-                            option_list = [cmd_setting.lower()]
-
                         if cmd_setting.lower() not in option_list:
                             option_list.append(cmd_setting.lower())
                             self.nv[top_level_cmd] = json.dumps(option_list)
