@@ -102,33 +102,31 @@ class push(znc.Module):
             self.PutModule("Notifications \x02disabled\x02.")
 
         elif top_level_cmd == "set":
-            if cmd_option:
-                if cmd_option == "token":
+            if cmd_option == "token":
 
-                    if self.nv.get('state', "") == 'on':
-                        self.PutModule("You must disable notifications before changing your token.")
+                if self.nv.get('state', "") == 'on':
+                    self.PutModule("You must disable notifications before changing your token.")
 
-                    else:
-                        if cmd_option:
-                            self.nv['token'] = cmd_setting
-                            self.PutModule("Token set successfully.")
-
-                        else:
-                            self.nv['token'] = ''
-                            self.PutModule("Token cleared.")
-
-                elif cmd_option in ("away_only", "private"):
-
-                    if cmd_setting in ("yes", "no"):
-                        self.nv[cmd_option] = cmd_setting
-                        self.PutModule(cmd_option + " option set to \x02" + cmd_setting + "\x02")
-
-                    else:
-                        self.PutModule("You must specify either 'yes' or 'no'.")
                 else:
-                    self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
+                    if cmd_setting:
+                        self.nv['token'] = cmd_setting
+                        self.PutModule("Token set successfully.")
+
+                    else:
+                        self.nv['token'] = ''
+                        self.PutModule("Token cleared.")
+
+            elif cmd_option in ("away_only", "private"):
+
+                if cmd_setting in ("yes", "no"):
+                    self.nv[cmd_option] = cmd_setting
+                    self.PutModule(cmd_option + " option set to \x02" + cmd_setting + "\x02")
+
+                else:
+                    self.PutModule("You must specify either 'yes' or 'no'.")
             else:
-                self.PutModule("You must specify a configuration option. See " + help_url)
+                self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
+
         elif top_level_cmd in ("highlight", "ignore"):
                 if cmd_option == "list":
                     if json.loads(self.nv.get(top_level_cmd, "[]")):
