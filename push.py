@@ -36,12 +36,8 @@ class push(znc.Module):
 
         my_nick = str(self.GetNetwork().GetCurNick()).lower()
         sender_nick = (nick.GetNick()).lower()
-        ignored = False
+        ignored = any(sender_nick == ignored_user for ignored_user in json.loads(self.nv.get('ignore', "[]")))
         highlighted = False
-        for ignored_user in json.loads(self.nv.get('ignore', "[]")):
-            if sender_nick == ignored_user:
-                ignored = True
-                break
 
         if channel:
             msg = str(message).lower().split()
@@ -124,7 +120,7 @@ class push(znc.Module):
 
                     if cmd_setting in ("yes", "no"):
                         self.nv[cmd_option] = cmd_setting
-                        self.PutModule(cmd_option + " option set to \x02" + command.split()[2] + "\x02")
+                        self.PutModule(cmd_option + " option set to \x02" + cmd_setting + "\x02")
 
                     else:
                         self.PutModule("You must specify either 'yes' or 'no'.")
