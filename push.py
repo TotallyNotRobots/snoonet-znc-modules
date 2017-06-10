@@ -23,40 +23,32 @@ class push(znc.Module):
         self.check_send(None, nick, message)
 
     def OnPrivNotice(self, nick, message):
-        if not (message.s).startswith("***"):
+        current_server = self.GetNetwork().GetIRCServer()
+        if not nick.GetNick() == str(current_server):
             self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
-        try:
-            if self.nv['state'] == "on":
-                try:
-                    if self.nv['away_only'] == "yes":
-                        if self.GetNetwork().IsIRCAway():
-                            self.check_contents(channel, nick, message)
-                    else:
-                        self.check_contents(channel, nick, message)
-                except:
+        if self.nv.get('state') == "on":
+            if self.nv.get('away_only') == "yes":
+                if self.GetNetwork().IsIRCAway():
                     self.check_contents(channel, nick, message)
-        except:
-            pass
+            else:
+                self.check_contents(channel, nick, message)
 
     def check_contents(self, channel, nick, message):
 
-        my_nick = (self.GetNetwork().GetIRCNick().GetNick()).lower()
+        my_nick = str(self.GetNetwork().GetCurNick()).lower()
         sender_nick = (nick.GetNick()).lower()
         ignored = False
-        highlighed = False
+        highlighted = False
 
-        try:
-            for ignored_user in json.loads(self.nv['ignore']):
-                if sender_nick == ignored_user:
-                    ignored = True
-                    break
-        except:
-            pass
+        for ignored_user in json.loads(self.nv.get('ignore', "")):
+            if sender_nick == ignored_user:
+                ignored = True
+                break
 
         if channel:
-            msg = ((message.s).lower()).split()
+            msg = (message.s.lower()).split()
 
             if not ignored:
                 for word in msg:
@@ -64,13 +56,11 @@ class push(znc.Module):
                         highlighted = True
                         break
                     else:
-                        try:
-                            for highlight_word in json.loads(self.nv['highlight']):
-                                if highlight_word == word:
-                                    highlighted = True
-                                    break
-                        except:
-                            pass
+                        for highlight_word in json.loads(
+                                self.nv.get('highlight', "")):
+
+                            if highlight_word == word:
+                                highlighted = True
 
             if highlighted and not ignored:
                 self.send_message(channel, nick, message)
@@ -88,71 +78,93 @@ class push(znc.Module):
             msg = "<" + nick.GetNick() + "> " + message.s
             ttl = 'Private Message'
 
-        try:
-            if self.nv['private'] == 'no':
-                ttl = msg
-        except:
-            pass
+        if self.nv.get('private', "") == 'no':
+            ttl = msg
 
         data = dict(type='note', title=ttl, body=msg)
-        requests.post('https://api.pushbullet.com/v2/pushes', auth=(self.nv['token'], ''), data=data)
+        requests.post('https://api.pushbullet.com/v2/pushes',
+                      auth=(self.nv['token'], ''), data=data)
 
     def OnModCommand(self, command):
         if command.split()[0] == "enable" or command.split()[0] == "disable":
             if command.split()[0] == "enable":
-                try:
-                    if self.nv['token']:
-                        self.nv['state'] = "on"
-                        self.PutModule("Notifications \x02enabled\x02.")
-                    else:
-                        self.PutModule("You must set a token before enabling notifications.")
-                except:
-                    self.PutModule("You must set a token before enabling notifications.")
+                if self.nv.get('token'):
+                    self.nv['state'] = "on"
+                    self.PutModule("Notifications \x02enabled\x02.")
+                else:
+                    self.PutModule("You must set a token before enabling "
+                                   "notifications.")
+
             elif command.split()[0] == "disable":
                 self.nv['state'] = "off"
                 self.PutModule("Notifications \x02disabled\x02.")
 
         elif command.split()[0] == "set":
             try:
+
                 if command.split()[1] == "token":
                     try:
+
                         if self.nv['state'] == 'on':
-                            self.PutModule("You must disable notifications before changing your token.")
+                            self.PutModule("You must disable notifications "
+                                           "before changing your token.")
                         else:
+
                             try:
                                 self.nv['token'] = command.split()[2]
                                 self.PutModule("Token set successfully.")
+
                             except:
                                 self.nv['token'] = ''
                                 self.PutModule("Token cleared.")
                     except:
+
                         try:
                             self.nv['token'] = command.split()[2]
                             self.PutModule("Token set successfully.")
+
                         except:
                             self.nv['token'] = ''
                             self.PutModule("Token cleared.")
 
-                elif command.split()[1] == "away_only" or command.split()[1] == "private":
-                    try:
-                        if command.split()[2] == "yes" or command.split()[2] == "no":
-                            self.nv[command.split()[1]] = command.split()[2]
-                            self.PutModule(command.split()[1] + " option set to \x02" + command.split()[2] + "\x02")
-                        else:
-                            self.PutModule("You must speciy either \'yes\' or \'no\'.")
-                    except:
-                        self.PutModule("You must specify either \'yes\' or \'no\'.")
-                else:
-                    self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
-            except:
-                self.PutModule("You must specify a configuration option. See " + help_url)
+                elif command.split()[1] == "away_only" or \
+                        command.split()[1] == "private":
 
-        elif command.split()[0] == "highlight" or command.split()[0] == "ignore":
+                    try:
+                        if command.split()[2] == "yes" or \
+                                        command.split()[2] == "no":
+
+                            self.nv[command.split()[1]] = command.split()[2]
+                            self.PutModule(command.split()[1] +
+                                           " option set to \x02" +
+                                           command.split()[2] + "\x02")
+
+                        else:
+                            self.PutModule("You must specify either 'yes' "
+                                           "or 'no'.")
+
+                    except:
+                        self.PutModule("You must specify either 'yes' or "
+                                       "'no'.")
+
+                else:
+                    self.PutModule("Invalid option. Options are 'token' and "
+                                   "'away_only'. See " + help_url)
+
+            except:
+                self.PutModule("You must specify a configuration option. See "
+                               + help_url)
+
+        elif command.split()[0] == "highlight" \
+                or command.split()[0] == "ignore":
+
                 cmd = command.split()[0]
                 if command.split()[1] == "list":
                     try:
-                        if json.loads(self.nv[cmd]):
-                            self.PutModule(cmd.title() + " list: \x02" + ', '.join(json.loads(self.nv[cmd])) + "\x02")
+                        if json.loads(self.nv.get(cmd)):
+                            self.PutModule(cmd.title() + " list: \x02" +
+                                           ', '.join(json.loads(self.nv[cmd]))
+                                           + "\x02")
                         else:
                             self.PutModule(cmd.title() + " list empty.")
                     except:
@@ -161,47 +173,63 @@ class push(znc.Module):
                 elif command.split()[1] == "add":
                     try:
                         list = json.loads(self.nv[cmd])
+
                         if (command.split()[2]).lower() not in list:
                             list.append((command.split()[2]).lower())
                             self.nv[cmd] = json.dumps(list)
-                            self.PutModule("\x02" + command.split()[2] + "\x02 added to " + cmd + " list.")
+                            self.PutModule("\x02" + command.split()[2]
+                                           + "\x02 added to " + cmd + " list.")
+
                         else:
-                            self.PutModule("\x02" + command.split()[2] + "\x02 already in " + cmd + " list.")
+                            self.PutModule("\x02" + command.split()[2] +
+                                           "\x02 already in " + cmd + " list.")
                     except:
                         try:
                             list = [(command.split()[2]).lower()]
                             self.nv[cmd] = json.dumps(list)
-                            self.PutModule("\x02" + command.split()[2] + "\x02 added to " + cmd + " list.")
+                            self.PutModule("\x02" + command.split()[2] +
+                                           "\x02 added to " + cmd + " list.")
                         except:
-                            self.PutModule("You must specify a single word or nick to add.")
+                            self.PutModule("You must specify a single "
+                                           "word or nick to add.")
 
                 elif command.split()[1] == "del":
                     try:
                         if self.nv[cmd]:
                             list = json.loads(self.nv[cmd])
+
                             if (command.split()[2]).lower() in list:
                                 list.remove((command.split()[2]).lower())
                                 self.nv[cmd] = json.dumps(list)
-                                self.PutModule("\x02" + command.split()[2] + "\x02 deleted from " + cmd + " list.")
+                                self.PutModule("\x02" + command.split()[2] +
+                                               "\x02 deleted from " +
+                                               cmd + " list.")
                             else:
-                                self.PutModule("\x02" + command.split()[2] + "\x02 not in " + cmd + " list.")
+                                self.PutModule("\x02" + command.split()[2] +
+                                               "\x02 not in " + cmd + " list.")
                         else:
                             self.PutModule(cmd.title() + " list empty.")
                     except:
                         try:
                             if not command.split()[2]:
-                                self.PutModule("You must specify a single word or nick to delete.")
+                                self.PutModule("You must specify a single "
+                                               "word or nick to delete.")
                             else:
                                 self.PutModule(cmd.title() + " list empty.")
                         except:
-                            self.PutModule("You must specify a single word or nick to delete.")
+                            self.PutModule("You must specify a single word "
+                                           "or nick to delete.")
 
                 else:
-                    self.PutModule("Invalid option. Options are 'list', 'add', and 'del'. See " + help_url)
+                    self.PutModule("Invalid option. Options are 'list', "
+                                   "'add', and 'del'. See " + help_url)
 
         elif command.split()[0] == "test":
-            data = dict(type='note', title="Test Message", body="This is a test message.")
-            requests.post('https://api.pushbullet.com/v2/pushes', auth=(self.nv['token'], ''), data=data)
+            data = dict(type='note', title="Test Message",
+                        body="This is a test message.")
+            requests.post('https://api.pushbullet.com/v2/pushes',
+                          auth=(self.nv['token'], ''), data=data)
+
             self.PutModule("Test message successfully sent.")
 
         elif command.split()[0] == "help":
