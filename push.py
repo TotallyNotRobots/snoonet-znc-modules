@@ -148,64 +148,46 @@ class push(znc.Module):
 
         elif top_level_cmd == "highlight" or top_level_cmd == "ignore":
 
-                if command.split()[1] == "list":
+                if cmd_option == "list":
                     if json.loads(self.nv.get(top_level_cmd, "")):
-                        self.PutModule(top_level_cmd.title() +
-                                       " list: \x02" + ', '.join(
-                                       json.loads(self.nv[top_level_cmd]))
-                                       + "\x02")
+                        self.PutModule(top_level_cmd.title() + " list: \x02" + ', '.join(json.loads(self.nv[top_level_cmd])) + "\x02")
                     else:
                         self.PutModule(top_level_cmd.title() + " list empty.")
 
-                elif command.split()[1] == "add":
-                    try:
-                        list = json.loads(self.nv.get(top_level_cmd, ""))
+                elif cmd_option == "add":
+                    if len(command) >= 3:
+                        option_list = json.loads(self.nv.get(top_level_cmd, []))
+                        if not option_list:
+                            option_list = [cmd_setting.lower()]
 
-                        if (command.split()[2]).lower() not in list:
-                            list.append((command.split()[2]).lower())
-                            self.nv[top_level_cmd] = json.dumps(list)
-                            self.PutModule("\x02" + command.split()[2]
+                        if cmd_setting.lower() not in option_list:
+                            option_list.append(cmd_setting.lower())
+                            self.nv[top_level_cmd] = json.dumps(option_list)
+                            self.PutModule("\x02" + cmd_setting
                                            + "\x02 added to " + top_level_cmd + " list.")
 
                         else:
-                            self.PutModule("\x02" + command.split()[2] +
+                            self.PutModule("\x02" + cmd_setting +
                                            "\x02 already in " + top_level_cmd + " list.")
-                    except:
-                        try:
-                            list = [(command.split()[2]).lower()]
-                            self.nv[top_level_cmd] = json.dumps(list)
-                            self.PutModule("\x02" + command.split()[2] +
-                                           "\x02 added to " + top_level_cmd + " list.")
-                        except:
-                            self.PutModule("You must specify a single "
-                                           "word or nick to add.")
+                    else:
+                        self.PutModule("You must specify a single word or nick to add.")
 
-                elif command.split()[1] == "del":
-                    try:
-                        if self.nv[top_level_cmd]:
-                            list = json.loads(self.nv[top_level_cmd])
+                elif cmd_option == "del":
+                    if len(command) >= 3:
+                        if self.nv.get(top_level_cmd):
+                            option_list = json.loads(self.nv[top_level_cmd])
 
-                            if (command.split()[2]).lower() in list:
-                                list.remove((command.split()[2]).lower())
-                                self.nv[top_level_cmd] = json.dumps(list)
-                                self.PutModule("\x02" + command.split()[2] +
-                                               "\x02 deleted from " +
-                                               top_level_cmd + " list.")
+                            if cmd_setting.lower() in option_list:
+                                option_list.remove(cmd_setting.lower())
+                                self.nv[top_level_cmd] = json.dumps(option_list)
+                                self.PutModule("\x02" + cmd_setting + "\x02 deleted from " + top_level_cmd + " list.")
+
                             else:
-                                self.PutModule("\x02" + command.split()[2] +
-                                               "\x02 not in " + top_level_cmd + " list.")
+                                self.PutModule("\x02" + cmd_setting + "\x02 not in " + top_level_cmd + " list.")
                         else:
                             self.PutModule(top_level_cmd.title() + " list empty.")
-                    except:
-                        try:
-                            if not command.split()[2]:
-                                self.PutModule("You must specify a single "
-                                               "word or nick to delete.")
-                            else:
-                                self.PutModule(top_level_cmd.title() + " list empty.")
-                        except:
-                            self.PutModule("You must specify a single word "
-                                           "or nick to delete.")
+                    else:
+                        self.PutModule("You must specify a single word or nick to delete.")
 
                 else:
                     self.PutModule("Invalid option. Options are 'list', "
