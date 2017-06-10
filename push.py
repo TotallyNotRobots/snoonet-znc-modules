@@ -76,18 +76,13 @@ class push(znc.Module):
     def OnModCommand(self, command):
         split_command = command.split()
         top_level_cmd = split_command[0]
+        cmd_option = None
+        cmd_setting = None
 
         if len(command) >= 2:
             cmd_option = split_command[1]
-
-        else:
-            cmd_option = None
-
-        if len(command) >= 3:
-            cmd_setting = split_command[2]
-
-        else:
-            cmd_setting = None
+            if len(command) >= 3:
+                cmd_setting = split_command[2]
 
         if top_level_cmd == "enable":
             if self.nv.get('token'):
