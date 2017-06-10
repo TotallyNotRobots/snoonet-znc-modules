@@ -39,7 +39,7 @@ class push(znc.Module):
         ignored = False
         highlighted = False
 
-        for ignored_user in json.loads(self.nv.get('ignore', [])):
+        for ignored_user in json.loads(self.nv.get('ignore', "[]")):
             if sender_nick == ignored_user:
                 ignored = True
                 break
@@ -53,7 +53,7 @@ class push(znc.Module):
                         highlighted = True
                         break
                     else:
-                        for highlight_word in json.loads(self.nv.get('highlight', [])):
+                        for highlight_word in json.loads(self.nv.get('highlight', "[]")):
                             if highlight_word == word:
                                 highlighted = True
 
