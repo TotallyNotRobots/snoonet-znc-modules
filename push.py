@@ -28,8 +28,8 @@ class push(znc.Module):
             self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
-        if self.nv.get('state') == "on":
-            if self.nv.get('away_only') == "yes":
+        if self.nv.get("state") == "on":
+            if self.nv.get("away_only") == "yes":
                 if self.GetNetwork().IsIRCAway():
                     self.check_contents(channel, nick, message)
             else:
@@ -48,7 +48,7 @@ class push(znc.Module):
                 break
 
         if channel:
-            msg = (message.s.lower()).split()
+            msg = str(message).lower().split()
 
             if not ignored:
                 for word in msg:
@@ -83,47 +83,41 @@ class push(znc.Module):
 
         data = dict(type='note', title=ttl, body=msg)
         requests.post('https://api.pushbullet.com/v2/pushes',
-                      auth=(self.nv['token'], ''), data=data)
+                      auth=(self.nv.get('token'), ''), data=data)
 
     def OnModCommand(self, command):
-        if command.split()[0] == "enable" or command.split()[0] == "disable":
-            if command.split()[0] == "enable":
-                if self.nv.get('token'):
-                    self.nv['state'] = "on"
-                    self.PutModule("Notifications \x02enabled\x02.")
-                else:
-                    self.PutModule("You must set a token before enabling "
-                                   "notifications.")
+        split_command = command.split()
+        top_level_cmd = split_command[0]
+        if len(command) > 2:
+            cmd_option = split_command[1]
+        if len(command) > 3:
+            cmd_setting = split_command[2]
 
-            elif command.split()[0] == "disable":
-                self.nv['state'] = "off"
-                self.PutModule("Notifications \x02disabled\x02.")
+        if top_level_cmd == "enable":
+            if self.nv.get('token'):
+                self.nv['state'] = "on"
+                self.PutModule("Notifications \x02enabled\x02.")
+            else:
+                self.PutModule("You must set a token before enabling "
+                               "notifications.")
 
-        elif command.split()[0] == "set":
-            try:
+        elif top_level_cmd == "disable":
+            self.nv['state'] = "off"
+            self.PutModule("Notifications \x02disabled\x02.")
 
+        elif top_level_cmd == "set":
+            if len(command) > 2:
                 if command.split()[1] == "token":
-                    try:
 
-                        if self.nv['state'] == 'on':
-                            self.PutModule("You must disable notifications "
-                                           "before changing your token.")
-                        else:
-
-                            try:
-                                self.nv['token'] = command.split()[2]
-                                self.PutModule("Token set successfully.")
-
-                            except:
-                                self.nv['token'] = ''
-                                self.PutModule("Token cleared.")
-                    except:
-
-                        try:
+                    if self.nv.get('state', "") == 'on':
+                        self.PutModule("You must disable notifications "
+                                       "before changing your token.")
+                    else:
+                        if len(command) > 3:
                             self.nv['token'] = command.split()[2]
                             self.PutModule("Token set successfully.")
 
-                        except:
+                        else:
                             self.nv['token'] = ''
                             self.PutModule("Token cleared.")
 
@@ -151,11 +145,11 @@ class push(znc.Module):
                     self.PutModule("Invalid option. Options are 'token' and "
                                    "'away_only'. See " + help_url)
 
-            except:
+            else:
                 self.PutModule("You must specify a configuration option. See "
                                + help_url)
 
-        elif command.split()[0] == "highlight" \
+        elif top_level_cmd == "highlight" \
                 or command.split()[0] == "ignore":
 
                 cmd = command.split()[0]
@@ -224,7 +218,7 @@ class push(znc.Module):
                     self.PutModule("Invalid option. Options are 'list', "
                                    "'add', and 'del'. See " + help_url)
 
-        elif command.split()[0] == "test":
+        elif top_level_cmd == "test":
             data = dict(type='note', title="Test Message",
                         body="This is a test message.")
             requests.post('https://api.pushbullet.com/v2/pushes',
@@ -232,7 +226,7 @@ class push(znc.Module):
 
             self.PutModule("Test message successfully sent.")
 
-        elif command.split()[0] == "help":
+        elif top_level_cmd == "help":
             self.PutModule("Instructions can be found at " + help_url)
 
         else:
