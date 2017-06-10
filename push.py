@@ -104,7 +104,7 @@ class push(znc.Module):
         elif top_level_cmd == "set":
             if cmd_option == "token":
 
-                if self.nv.get('state', "") == 'on':
+                if self.nv.get('state') == 'on':
                     self.PutModule("You must disable notifications before changing your token.")
 
                 else:
