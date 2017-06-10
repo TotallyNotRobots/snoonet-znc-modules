@@ -24,15 +24,12 @@ class push(znc.Module):
 
     def OnPrivNotice(self, nick, message):
         current_server = self.GetNetwork().GetIRCServer()
-        if not nick.GetNick() == str(current_server):
+        if nick.GetNick() != str(current_server):
             self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
         if self.nv.get("state") == "on":
-            if self.nv.get("away_only") == "yes":
-                if self.GetNetwork().IsIRCAway():
-                    self.check_contents(channel, nick, message)
-            else:
+            if self.nv.get("away_only") != "yes" or self.GetNetwork().IsIRCAway():
                 self.check_contents(channel, nick, message)
 
     def check_contents(self, channel, nick, message):
@@ -42,7 +39,7 @@ class push(znc.Module):
         ignored = False
         highlighted = False
 
-        for ignored_user in json.loads(self.nv.get('ignore', "")):
+        for ignored_user in json.loads(self.nv.get('ignore', [])):
             if sender_nick == ignored_user:
                 ignored = True
                 break
@@ -56,9 +53,7 @@ class push(znc.Module):
                         highlighted = True
                         break
                     else:
-                        for highlight_word in json.loads(
-                                self.nv.get('highlight', "")):
-
+                        for highlight_word in json.loads(self.nv.get('highlight', [])):
                             if highlight_word == word:
                                 highlighted = True
 
@@ -104,8 +99,7 @@ class push(znc.Module):
                 self.nv['state'] = "on"
                 self.PutModule("Notifications \x02enabled\x02.")
             else:
-                self.PutModule("You must set a token before enabling "
-                               "notifications.")
+                self.PutModule("You must set a token before enabling notifications.")
 
         elif top_level_cmd == "disable":
             self.nv['state'] = "off"
@@ -116,8 +110,7 @@ class push(znc.Module):
                 if cmd_option == "token":
 
                     if self.nv.get('state', "") == 'on':
-                        self.PutModule("You must disable notifications "
-                                       "before changing your token.")
+                        self.PutModule("You must disable notifications before changing your token.")
                     else:
                         if len(command) > 3:
                             self.nv['token'] = command.split()[2]
@@ -131,16 +124,14 @@ class push(znc.Module):
 
                     if cmd_setting == "yes" or cmd_setting == "no":
                         self.nv[cmd_option] = cmd_setting
-                        self.PutModule(cmd_option + " option set to \x02" +
-                                       command.split()[2] + "\x02")
+                        self.PutModule(cmd_option + " option set to \x02" + command.split()[2] + "\x02")
 
                     else:
                         self.PutModule(
                             "You must specify either 'yes' or 'no'.")
 
                 else:
-                    self.PutModule("Invalid option. Options are 'token' and "
-                                   "'away_only'. See " + help_url)
+                    self.PutModule("Invalid option. Options are 'token' and 'away_only'. See " + help_url)
 
             else:
                 self.PutModule("You must specify a configuration option. See "
@@ -163,8 +154,7 @@ class push(znc.Module):
                         if cmd_setting.lower() not in option_list:
                             option_list.append(cmd_setting.lower())
                             self.nv[top_level_cmd] = json.dumps(option_list)
-                            self.PutModule("\x02" + cmd_setting
-                                           + "\x02 added to " + top_level_cmd + " list.")
+                            self.PutModule("\x02" + cmd_setting + "\x02 added to " + top_level_cmd + " list.")
 
                         else:
                             self.PutModule("\x02" + cmd_setting +
