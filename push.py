@@ -28,9 +28,8 @@ class push(znc.Module):
             self.check_send(None, nick, message)
 
     def check_send(self, channel, nick, message):
-        if self.nv.get("state") == "on":
-            if self.nv.get("away_only") != "yes" or self.GetNetwork().IsIRCAway():
-                self.check_contents(channel, nick, message)
+        if self.nv.get("state") == "on" and (self.nv.get("away_only") != "yes" or self.GetNetwork().IsIRCAway()):
+            self.check_contents(channel, nick, message)
 
     def check_contents(self, channel, nick, message):
         my_nick = str(self.GetNetwork().GetCurNick()).lower()
