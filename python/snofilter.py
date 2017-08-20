@@ -93,7 +93,7 @@ class snofilter(znc.Module):
     @property
     def snotice_re(self):
         if self._snotice_re is None:
-            self._snotice_re = re.compile(self.nv['snotice_re'])
+            self._snotice_re = re.compile(self.nv.get('snotice_re', DEFAULT_SNOTICE_FORMAT))
         return self._snotice_re
 
     @snotice_re.setter
