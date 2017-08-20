@@ -23,4 +23,3 @@ class irccloud(znc.Module):
             return znc.HALT
 
         return znc.CONTINUE
-
