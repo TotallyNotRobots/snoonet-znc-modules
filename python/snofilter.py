@@ -1,6 +1,7 @@
 import json
 import re
 from collections import namedtuple
+from functools import partial
 
 import znc
 
@@ -47,16 +48,14 @@ class snofilter(znc.Module):
     def handle_snotice(self, snotype, message, network):
         cur_nick = network.GetCurNick()
         snotype = snotype.lower()
-        command = ":*{{window}}!snofilter@znc.in {{msg_type}} {cur_nick} :{message}".format(
-            cur_nick=cur_nick, message=message
-        )
+        cmd_fmt = ":*{window}!snofilter@znc.in {msg_type} {cur_nick} :{message}"
+        cmd_msg = partial(cmd_fmt.format, cur_nick=cur_nick, message=message)
         sno_settings = [s for s in self.sno_settings if s['type'].lower() == snotype]
         for settings in (sno_settings or [{}]):
-            fmt_command = command.format(
+            self.PutUser(cmd_msg(
                 window=settings.get('window', snotype),
                 msg_type=settings.get('msg_type', DEFAULT_MSG_TYPE)
-            )
-            self.PutUser(fmt_command)
+            ))
 
     def OnPrivNotice(self, nick, message):
         network = self.GetNetwork()
