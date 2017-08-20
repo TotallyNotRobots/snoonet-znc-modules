@@ -1,12 +1,14 @@
-import znc
-import re
 import json
+import re
 from collections import namedtuple
 
-DEFAULT_SNOTICE_FORMAT = r"\*\*\* (?P<snotype>[^ ]+?): (?P<message>.*)"
+import znc
+
+# Matches InspIRCd 2.0 server notices
+DEFAULT_SNOTICE_FORMAT = r"\*\*\*\s(?P<snotype>\S+?):\s*(?P<message>.*)"
 DEFAULT_MSG_TYPE = "NOTICE"
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __author__ = "linuxdaemon"
 
 Command = namedtuple('Command', 'name func syntax doc minargs')
@@ -17,12 +19,14 @@ class snofilter(znc.Module):
     module_types = [znc.CModInfo.NetworkModule]
 
     def OnLoad(self, args, message):
-        self.snotice_re = self.nv.get('snotice_re', DEFAULT_SNOTICE_FORMAT)
+        self._snotice_re = None
         self.sno_settings = self.load_settings()
         self.commands = {}
-        self.add_command("SetPattern", self.set_pattern, "<pattern>", "Set the regex used when parsing the server notices", 1)
+        self.add_command("SetPattern", self.set_pattern, "<pattern>",
+                         "Set the regex used when parsing the server notices", 1)
         self.add_command("GetPattern", self.get_pattern, "", "Get the current regex used to parse server notices")
-        self.add_command("AddRule", self.add_rule, "<type> <window> [msg_type]", "Will send a server notices of <type> to <window> as [msg_type] (default: notice)", 2)
+        self.add_command("AddRule", self.add_rule, "<type> <window> [msg_type]",
+                         "Will send a server notices of <type> to <window> as [msg_type] (default: notice)", 2)
         self.add_command("DelRule", self.del_rule, "<rulenum>", "Remove a server notice rule from the list", 1)
         self.add_command("ListRules", self.list_rules, "", "List all current server notice rules")
         self.add_command("Help", self.send_help, "", "List all commands supported by this module")
@@ -40,24 +44,32 @@ class snofilter(znc.Module):
     def save_settings(self):
         self.nv['rules'] = json.dumps(self.sno_settings)
 
-    def handle_snotice(self, snotype, message):
-        network = self.GetNetwork()
-        command = ":*{window}!snofilter@znc.in {msg_type} {cur_nick} :{message}"
-        sno_settings = [s for s in self.sno_settings if s['type'].lower() == snotype.lower()]
+    def handle_snotice(self, snotype, message, network):
+        cur_nick = network.GetCurNick()
+        snotype = snotype.lower()
+        command = ":*{{window}}!snofilter@znc.in {{msg_type}} {cur_nick} :{message}".format(
+            cur_nick=cur_nick, message=message
+        )
+        sno_settings = [s for s in self.sno_settings if s['type'].lower() == snotype]
         for settings in (sno_settings or [{}]):
-            fmt_command = command.format(window=settings.get('window', snotype.lower()),
-                                         msg_type=settings.get('msg_type', DEFAULT_MSG_TYPE),
-                                         cur_nick=network.GetCurNick(), message=message)
+            fmt_command = command.format(
+                window=settings.get('window', snotype),
+                msg_type=settings.get('msg_type', DEFAULT_MSG_TYPE)
+            )
             self.PutUser(fmt_command)
-    
+
     def OnPrivNotice(self, nick, message):
-        server_name = self.GetNetwork().GetIRCServer()
-        if str(server_name) == str(nick.GetNick()):
-            match = re.match(self.snotice_re, str(message))
-            if match:
-                self.handle_snotice(match.group('snotype'), match.group('message'))
-                return znc.HALTCORE
-        return znc.CONTINUE
+        network = self.GetNetwork()
+        server_name = network.GetIRCServer()
+        if nick.GetNick() != server_name:
+            return znc.CONTINUE
+
+        match = self.snotice_re.fullmatch(str(message))
+        if not match:
+            return znc.CONTINUE
+
+        self.handle_snotice(match.group('snotype'), match.group('message'), network)
+        return znc.HALTCORE
 
     def OnModCommand(self, line):
         cmd, _, args = line.partition(' ')
@@ -69,11 +81,29 @@ class snofilter(znc.Module):
         if command.minargs > len(args.split()):
             self.PutModule("Invalid arguments")
             return
-        command.func(args)
-        
+
+        resp = command.func(args)
+        if resp:
+            if isinstance(resp, tuple):
+                for part in resp:
+                    self.PutModule(part)
+            else:
+                self.PutModule(resp)
+
+    @property
+    def snotice_re(self):
+        if self._snotice_re is None:
+            self._snotice_re = re.compile(self.nv['snotice_re'])
+        return self._snotice_re
+
+    @snotice_re.setter
+    def snotice_re(self, pattern):
+        self.nv['snotice_re'] = pattern
+        # Invalidate cached pattern
+        self._snotice_re = None
+
     def set_pattern(self, pattern):
         self.snotice_re = pattern
-        self.nv['snotice_re'] = pattern
 
     def get_pattern(self, line):
         self.PutModule("Current Pattern: \"{}\"".format(self.snotice_re))
@@ -106,8 +136,7 @@ class snofilter(znc.Module):
         rule_tbl.AddColumn("Type")
         rule_tbl.AddColumn("Window")
         rule_tbl.AddColumn("Message Type")
-        for i in range(len(self.sno_settings)):
-            settings = self.sno_settings[i]
+        for i, settings in enumerate(self.sno_settings):
             rule_tbl.AddRow()
             rule_tbl.SetCell("Num", str(i))
             rule_tbl.SetCell("Type", settings['type'])
