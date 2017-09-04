@@ -51,8 +51,7 @@ class masshl(znc.Module):
 
             if count != 0:
                 if self.nvget("debug"):
-                    self.PutModule(self.makeCString("checkednicks is: {}"
-                                   .format(str(checkednicks))))
+                    self.PutModule("checkednicks is: {}".format(checkednicks))
 
             if count >= self.nvgetint("count"):
                 self.tryban(inick, ichan, count)
@@ -68,8 +67,7 @@ class masshl(znc.Module):
                         self.nickcount[nick] = {chan: {"count": count,
                                                        "lping": time.time()}}
                         if self.nvget("debug"):
-                            self.PutModule("1 seen        {nick}".format(nick=(
-                                nick + " " + chan)))
+                            self.PutModule("1 seen        {nick} {chan}".format(nick=nick, chan=chan))
 
                 elif chan not in self.nickcount[nick]:
                     if self.nvget("mexempts") and self.checkmexempts(inick):
@@ -78,19 +76,17 @@ class masshl(znc.Module):
                         self.nickcount[nick][chan] = {"count": count,
                                                       "lping": time.time()}
                         if self.nvget("debug"):
-                            self.PutModule("1 seen      {nick}".format(nick=(
-                                nick + " " + chan)))
+                            self.PutModule("1 seen      {nick} {chan}".format(nick=nick, chan=chan))
 
                 # if we have seen them, increment their count
                 elif self.nickcount[nick][chan]:
                     # check the time against the configured timeout, and delete
                     # the user if its more than the timeout
-                    if (time.time() - self.nickcount[nick][chan]["lping"]) \
-                            >= self.nvgetint("timeout"):
-
-                        self.PutModule("timeout ({time})  {nick}".format(
-                            time=str(self.nvgetint("timeout")),
-                            nick=(nick + " " + chan)))
+                    timeout = self.nvgetint("timeout")
+                    if (time.time() - self.nickcount[nick][chan]["lping"]) >= timeout:
+                        self.PutModule(
+                            "timeout ({time})  {nick} {chan}".format(time=timeout, nick=nick, chan=chan)
+                        )
 
                         del self.nickcount[nick][chan]
 
@@ -98,40 +94,43 @@ class masshl(znc.Module):
                         self.nickcount[nick][chan]["count"] += count
                         if self.nvget("debug"):
                             self.PutModule(
-                                "{} seen        {nick}".format(
+                                "{} seen        {nick} {chan}".format(
                                     self.nickcount[nick][chan]["count"],
-                                    nick=(nick + " " + chan)))
+                                    nick=nick,
+                                    chan=chan
+                                )
+                            )
 
+                    max_count = self.nvgetint("count")
                     if nick in self.nickcount:
                         if chan in self.nickcount[nick]:
+                            current_count = self.nickcount[nick][chan]["count"]
                             # if they hit the set count, try to ban them
-                            if self.nickcount[nick][chan]["count"] >= \
-                                    self.nvgetint("count"):
-
-                                self.tryban(inick, ichan,
-                                        self.nickcount[nick][chan]["count"])
+                            if current_count >= max_count:
+                                self.tryban(inick, ichan, current_count)
                                 del self.nickcount[nick][chan]
 
-                            elif self.nickcount[nick][chan]["count"] == \
-                                    math.floor((self.nvgetint("count")/4)*3):
-
-                                self.sendtoops(chan,
-                                "{nick} is nearing threshold in {chan}. "
-                                "count is {count}, threshold is {thr}".format(
-                                nick=nick, chan=chan,
-                                count=str(self.nickcount[nick][chan]["count"]),
-                                    thr=str(self.nvgetint("count"))))
+                            elif (current_count / max_count) >= 0.75:
+                                self.sendtoops(
+                                    chan,
+                                    "{nick} is nearing threshold in {chan}. count is {count}, threshold is {thr}".format(
+                                        nick=nick, chan=chan,
+                                        count=current_count,
+                                        thr=max_count,
+                                    )
+                                )
 
             if count == 0 and nick in self.nickcount:
                 if chan in self.nickcount[nick]:
                     del self.nickcount[nick][chan]
                     if self.nvget("debug"):
-                        self.PutModule("cleared       {nick}"
-                                       .format(nick=(nick + " " + chan)))
+                        self.PutModule("cleared       {nick} {chan}".format(nick=nick, chan=chan))
 
             return znc.CONTINUE
 
     def tryban(self, inick, chan, count):
+        chan_name = chan.GetName()
+        inick_nick = inick.GetNick()  # TODO find a better name for this variable
 
         # check if user has permission to ban in the channel
         if chan.HasPerm(ord(znc.CChan.Op)) or \
@@ -142,44 +141,54 @@ class masshl(znc.Module):
             # ops
             if inick.HasPerm(ord(znc.CChan.Op)) \
                     and "op" in self.nvget("exempts"):
-                self.PutModule("MHL from {nick} in {chan}. "
-                               "Count was {count}. User is exempt (op)"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.PutModule(
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (op)".format(
+                        nick=inick_nick,
+                        chan=chan_name,
+                        count=count,
+                    )
+                )
 
-                self.sendtoops(chan.GetName(),
-                               "MHL from {nick} in {chan}. Count was {count}. "
-                               "User is exempt (op)".format(
-                                   nick=inick.GetNick(),
-                                   chan=chan.GetName(), count=str(count)))
+                self.sendtoops(
+                    chan_name,
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (op)".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
                 return znc.CONTINUE
 
             elif inick.HasPerm(ord(znc.CChan.HalfOp)) \
                     and "hop" in self.nvget("exempts"):
 
-                self.PutModule("MHL from {nick} in {chan}."
-                               " Count was {count}. User is exempt (hop)"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.PutModule(
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (hop)".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
 
-                self.sendtoops(chan.GetName(), "MHL from {nick} in {chan}."
-                               " Count was {count}. User is exempt (hop)"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.sendtoops(
+                    chan_name,
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (hop)".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
                 return znc.CONTINUE
 
             elif inick.HasPerm(ord(znc.CChan.Voice)) and "voice" in \
                     self.nvget("exempts"):
 
-                self.PutModule("MHL from {nick} in {chan}."
-                               " Count was {count}. User is exempt (voice)"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.PutModule(
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (voice)".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
 
-                self.sendtoops(chan.GetName(), "MHL from {nick} in {chan}. "
-                               "Count was {count}. User is exempt (voice)"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.sendtoops(
+                    chan_name,
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (voice)".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
                 return znc.CONTINUE
 
             else:
@@ -187,45 +196,50 @@ class masshl(znc.Module):
                 for emask in self.nvget("mexempts"):
                     if fnmatch(inick.GetHostMask().lower(), emask.lower()):
                         self.PutModule(
-                            "MHL from {nick} in {chan}. Count was {count}."
-                            " User is exempt (matches {mask})"
-                            .format(nick=inick.GetNick(), chan=chan.GetName(),
-                                    count=str(count), mask=emask))
+                            "MHL from {nick} in {chan}. Count was {count}. User is exempt (matches {mask})".format(
+                                nick=inick_nick, chan=chan_name, count=count, mask=emask
+                            )
+                        )
 
-                        self.sendtoops(chan.GetName(), "MHL from {nick} in "
-                        "{chan}. Count was {count}. User is exempt (matches "
-                        "{mask})".format(
-                            nick=inick.GetNick(), chan=chan.GetName(),
-                                count=str(count), mask=emask))
+                        self.sendtoops(
+                            chan_name,
+                            "MHL from {nick} in {chan}. Count was {count}. User is exempt (matches {mask})".format(
+                                nick=inick_nick, chan=chan_name, count=count, mask=emask
+                            )
+                        )
                         return znc.CONTINUE
 
                 banmask = "*!*@" + inick.GetHost()
 
-                self.PutModule("MHL from {nick} in {chan}. Count was {count}. "
-                               "Ban sent"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.PutModule(
+                    "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
 
-                self.sendtoops(chan.GetName(), "MHL from {nick} in {chan}. "
-                                               "Count was {count}. Ban sent"
-                               .format(nick=inick.GetNick(),
-                                       chan=chan.GetName(), count=str(count)))
+                self.sendtoops(
+                    chan_name,
+                    "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
+                        nick=inick_nick, chan=chan_name, count=count
+                    )
+                )
 
-                self.PutIRC(self.nv["commands"].format(nick=inick.GetNick(),
-                                                       chan=chan.GetName(),
-                                                       mask=banmask,
-                                                       count=str(count)))
+                self.PutIRC(
+                    self.nv["commands"].format(nick=inick_nick, chan=chan_name, mask=banmask, count=count)
+                )
         else:
-            self.PutModule("MHL from {nick} in {chan}. Count was {count}. "
-                           "We're not opped, no action taken"
-                           .format(nick=inick.GetNick(), chan=chan.GetName(),
-                                   count=str(count)))
+            self.PutModule(
+                "MHL from {nick} in {chan}. Count was {count}. We're not opped, no action taken".format(
+                    nick=inick_nick, chan=chan_name, count=count
+                )
+            )
 
     def sendtoops(self, chan, msg):
         for opchanstr in self.nvget("opchans"):
             if chan.lower() in opchanstr.split(":"):
-                self.PutIRC("PRIVMSG {opchan} :***MASSHL {msg}".format(
-                    opchan=opchanstr.split(":")[1], msg=msg))
+                self.PutIRC(
+                    "PRIVMSG {opchan} :***MASSHL {msg}".format(opchan=opchanstr.split(":")[1], msg=msg)
+                )
 
     def checkmexempts(self, nick):
         ecount = 0 
@@ -249,8 +263,7 @@ class masshl(znc.Module):
         if oldnick in self.nickcount:
             del self.nickcount[oldnick]
             if self.nvget("debug"):
-                self.PutModule("ncleared      {nnick} {onick}".format(
-                    nnick=newnick.s, onick=oldnick))
+                self.PutModule("ncleared      {nnick} {onick}".format(nnick=newnick, onick=oldnick))
 
         return znc.CONTINUE
 
@@ -263,8 +276,9 @@ class masshl(znc.Module):
                 if pchan in self.nickcount[pnick]:
                     del self.nickcount[pnick][pchan]
                     if self.nvget("debug"):
-                        self.PutModule("pcleared      {nick}".format(
-                            nick=(pnick + " " + pchan)))
+                        self.PutModule(
+                            "pcleared      {nick} {chan}".format(nick=pnick, chan=pchan)
+                        )
 
         return znc.CONTINUE
 
@@ -276,8 +290,7 @@ class masshl(znc.Module):
                 if kchan in self.nickcount[knick]:
                     del self.nickcount[knick][kchan]
                     if self.nvget("debug"):
-                        self.PutModule("kcleared      {nick}".format(
-                            nick=(knick + " " + kchan)))
+                        self.PutModule("kcleared      {nick} {chan}".format(nick=knick, chan=kchan))
         return znc.CONTINUE
 
     def OnQuit(self, inick, qmsg, vchans):
@@ -313,22 +326,19 @@ class masshl(znc.Module):
                 self.nvappend("chans", cmd[1].lower())
                 self.PutModule("{} added to enforced channels".format(cmd[1]))
             else:
-                self.PutModule("{cmd} is already in the enforced channel list"
-                               .format(cmd=cmd[1]))
+                self.PutModule("{cmd} is already in the enforced channel list".format(cmd=cmd[1]))
             return znc.CONTINUE
 
         elif cmd[0] == "delchan":
             try:
                 self.nvremove("chans", cmd[1].lower())
-                self.PutModule("{cmd} removed from enforced channel list"
-                               .format(cmd=cmd[1]))
+                self.PutModule("{cmd} removed from enforced channel list".format(cmd=cmd[1]))
             except ValueError:
                 self.PutModule("Channel not found in enforced channel list")
 
         elif cmd[0] == "lchan":
             if self.nvget("chans"):
-                self.PutModule("Currently enforced channels: {chans}"
-                               .format(chans=" ".join(self.nvget("chans"))))
+                self.PutModule("Currently enforced channels: {chans}".format(chans=" ".join(self.nvget("chans"))))
             else:
                 self.PutModule("The enforced channel list is empty")
             return znc.CONTINUE
@@ -427,7 +437,6 @@ class masshl(znc.Module):
             self.PutModule("Mask exempt list has been cleared")
 
         elif cmd[0] == "reset":
-            # self.nv.clear()
             self.nvset("firstrun", "")
             self.OnLoad(None, None)
 
