@@ -6,6 +6,7 @@ import math
 # which get status updates like the user does
 
 # TODO: Add a list validate function that runs hourly, checks timeouts etc.
+from collections import defaultdict
 
 
 class masshl(znc.Module):
@@ -16,7 +17,7 @@ class masshl(znc.Module):
 
     def OnLoad(self, args, msg):
         self.PutModule("masshl loaded")
-        self.nickcount = {}
+        self.nickcount = defaultdict(lambda: defaultdict(dict))
         # checking if this is our first run and if so, setting defaults
         if not self.nv.get("firstrun"):
             self.nvset("chans", [""])
@@ -63,11 +64,7 @@ class masshl(znc.Module):
                 if self.checkmexempts(inick):
                     return znc.CONTINUE
 
-                if not self.nickcount.get(nick):
-                    self.nickcount[nick] = {chan: {"count": count, "lping": time.time()}}
-                    if self.nvget("debug"):
-                        self.PutModule("1 seen        {nick} {chan}".format(nick=nick, chan=chan))
-                elif chan not in self.nickcount[nick]:
+                if chan not in self.nickcount[nick]:
                     self.nickcount[nick][chan] = {"count": count, "lping": time.time()}
                     if self.nvget("debug"):
                         self.PutModule("1 seen      {nick} {chan}".format(nick=nick, chan=chan))
