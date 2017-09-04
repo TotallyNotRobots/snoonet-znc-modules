@@ -1,19 +1,24 @@
-import znc
-from fnmatch import fnmatch
 import time
-import math
+from collections import defaultdict
+from fnmatch import fnmatch
+
+import znc
+
+
 # VER: 1.7 - added the ability to set opchans,
 # which get status updates like the user does
 
-# TODO: Add a list validate function that runs hourly, checks timeouts etc.
-from collections import defaultdict
+
+class timeout_timer(znc.Timer):
+    def RunJob(self):
+        self.GetModule().do_timeouts()
 
 
 class masshl(znc.Module):
     description = "monitoring of mass highlights and automatic action"
     module_types = [znc.CModInfo.NetworkModule]
 
-    vexempts = ["op", "hop", "voice"]   # Valid exempt list
+    vexempts = ["op", "hop", "voice"]  # Valid exempt list
 
     def OnLoad(self, args, msg):
         self.PutModule("masshl loaded")
@@ -31,7 +36,28 @@ class masshl(znc.Module):
             self.nvset("firstrun", ["no"])
             self.nvset("opchans", [""])
             self.nvset("nickignore", [""])
+
+        # Run list cleanup every 30 minutes
+        self.CreateTimer(timeout_timer, interval=1800, cycles=0, description="Cleans up the ping data from masshl.py")
         return True
+
+    def do_timeouts(self):
+        timeout = self.nvget("timeout")
+        nicks_to_remove = []
+        for nick, chans in self.nickcount.items():
+            chans_to_remove = []
+            for name, data in chans.items():
+                if not data or (time.time() - data.get('lping', 0)) >= timeout:
+                    chans_to_remove.append(name)
+
+            for chan in chans_to_remove:
+                del chans[chan]
+
+            if not chans:
+                nicks_to_remove.append(nick)
+
+        for nick in nicks_to_remove:
+            del self.nickcount[nick]
 
     def OnChanMsg(self, inick, ichan, msg):
         chan = ichan.GetName().lower()
@@ -50,13 +76,11 @@ class masshl(znc.Module):
             # Check the current count against the configured max, if its the
             # same or bigger, send configured commands
 
-            if count != 0:
-                if self.nvget("debug"):
-                    self.PutModule("checkednicks is: {}".format(checkednicks))
+            if count != 0 and self.nvget("debug"):
+                self.PutModule("checkednicks is: {}".format(checkednicks))
 
             if count >= self.nvgetint("count"):
                 self.tryban(inick, ichan, count)
-
             elif count <= 9 and count != 0:
                 # checking if we've seen this nick in this channel before,
                 # if not, check if they match anything in the mask exempt list,
@@ -65,56 +89,46 @@ class masshl(znc.Module):
                     return znc.CONTINUE
 
                 if chan not in self.nickcount[nick]:
-                    self.nickcount[nick][chan] = {"count": count, "lping": time.time()}
-                    if self.nvget("debug"):
-                        self.PutModule("1 seen      {nick} {chan}".format(nick=nick, chan=chan))
-                # if we have seen them, increment their count
-                elif self.nickcount[nick][chan]:
-                    # check the time against the configured timeout, and delete
-                    # the user if its more than the timeout
-                    timeout = self.nvgetint("timeout")
-                    if (time.time() - self.nickcount[nick][chan]["lping"]) >= timeout:
-                        self.PutModule(
-                            "timeout ({time})  {nick} {chan}".format(time=timeout, nick=nick, chan=chan)
+                    self.nickcount[nick][chan] = {"count": 0, "lping": time.time()}
+
+                # check the time against the configured timeout, and delete
+                # the user if its more than the timeout
+                timeout = self.nvgetint("timeout")
+                if (time.time() - self.nickcount[nick][chan]["lping"]) >= timeout:
+                    self.PutModule(
+                        "timeout ({time})  {nick} {chan}".format(time=timeout, nick=nick, chan=chan)
+                    )
+                    self.nickcount[nick][chan]["count"] = 0
+
+                self.nickcount[nick][chan]["count"] += count
+                if self.nvget("debug"):
+                    self.PutModule(
+                        "{} seen        {nick} {chan}".format(
+                            self.nickcount[nick][chan]["count"],
+                            nick=nick,
+                            chan=chan
+                        )
+                    )
+
+                max_count = self.nvgetint("count")
+                if chan in self.nickcount[nick]:
+                    current_count = self.nickcount[nick][chan]["count"]
+                    # if they hit the set count, try to ban them
+                    if current_count >= max_count:
+                        self.tryban(inick, ichan, current_count)
+                        del self.nickcount[nick][chan]
+                    elif (current_count / max_count) >= 0.75:
+                        self.sendtoops(
+                            chan,
+                            "{nick} is nearing threshold in {chan}. count is {count}, threshold is {thr}".format(
+                                nick=nick, chan=chan, count=current_count, thr=max_count
+                            )
                         )
 
-                        del self.nickcount[nick][chan]
-
-                    elif not self.checkmexempts(inick):
-                        self.nickcount[nick][chan]["count"] += count
-                        if self.nvget("debug"):
-                            self.PutModule(
-                                "{} seen        {nick} {chan}".format(
-                                    self.nickcount[nick][chan]["count"],
-                                    nick=nick,
-                                    chan=chan
-                                )
-                            )
-
-                    max_count = self.nvgetint("count")
-                    if nick in self.nickcount:
-                        if chan in self.nickcount[nick]:
-                            current_count = self.nickcount[nick][chan]["count"]
-                            # if they hit the set count, try to ban them
-                            if current_count >= max_count:
-                                self.tryban(inick, ichan, current_count)
-                                del self.nickcount[nick][chan]
-
-                            elif (current_count / max_count) >= 0.75:
-                                self.sendtoops(
-                                    chan,
-                                    "{nick} is nearing threshold in {chan}. count is {count}, threshold is {thr}".format(
-                                        nick=nick, chan=chan,
-                                        count=current_count,
-                                        thr=max_count,
-                                    )
-                                )
-
-            if count == 0 and nick in self.nickcount:
-                if chan in self.nickcount[nick]:
-                    del self.nickcount[nick][chan]
-                    if self.nvget("debug"):
-                        self.PutModule("cleared       {nick} {chan}".format(nick=nick, chan=chan))
+            if count == 0 and chan in self.nickcount[nick]:
+                del self.nickcount[nick][chan]
+                if self.nvget("debug"):
+                    self.PutModule("cleared       {nick} {chan}".format(nick=nick, chan=chan))
 
             return znc.CONTINUE
 
@@ -342,7 +356,7 @@ class masshl(znc.Module):
                 else:
                     self.PutModule("{cmd} is not a valid exempt, valid "
                                    "exempts are: {vexempts}".format(cmd=cmd[1],
-                                    vexempts=" ".join(self.vexempts)))
+                                                                    vexempts=" ".join(self.vexempts)))
             return znc.CONTINUE
 
         elif cmd[0] == "lexempt":
@@ -609,9 +623,9 @@ class masshl(znc.Module):
             elif self.nv[self.makeCString(key)] == ["no"]:
                 return False
             return self.nv[self.makeCString(key)].split()
-        else:                                   # If the requested key
-                                                # doesn't exist, initiate it
-                                                # and return
+        else:  # If the requested key
+            # doesn't exist, initiate it
+            # and return
             self.nv[self.makeCString(key)] = ""
             return [""]
 
@@ -625,7 +639,7 @@ class masshl(znc.Module):
         self.nv[self.makeCString(key)] = str(data)
 
     def nvset(self, key, data):
-            self.nv[self.makeCString(key)] = " ".join(data)
+        self.nv[self.makeCString(key)] = " ".join(data)
 
     def nvremove(self, key, data):
         temp = self.nvget(key)
