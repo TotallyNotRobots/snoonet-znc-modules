@@ -39,11 +39,10 @@ class masshl(znc.Module):
             bmsg = msg.s.lower()
             nick = inick.GetNick()
             # List of nicks in the channel
-            nicks = list(map(lambda n: n.GetNick().lower(),
-                             ichan.GetNicks().values()))
+            nicks = [nick.GetNick().casefold() for nick in ichan.GetNicks().values()]
 
             # checks the message contents vs the list of nicks
-            checkednicks = set(filter(lambda n: n in bmsg, nicks))
+            checkednicks = {nick for nick in nicks if nick in bmsg}
             for ignnick in self.nvget("nickignore"):
                 if ignnick in checkednicks:
                     checkednicks.remove(ignnick)
@@ -137,7 +136,7 @@ class masshl(znc.Module):
 
         # check if user has permission to ban in the channel
         if chan.HasPerm(ord(znc.CChan.Op)) or \
-                chan.HasPerm(ord(znc.CChan.HalfOp)) or\
+                chan.HasPerm(ord(znc.CChan.HalfOp)) or \
                 chan.HasPerm(ord(znc.CChan.Admin)):
 
             # checking if the incoming user has op and whether or not we exempt
