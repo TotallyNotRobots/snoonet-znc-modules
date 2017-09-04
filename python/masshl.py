@@ -289,7 +289,7 @@ class masshl(znc.Module):
         return znc.CONTINUE
 
     def OnIRCDisconnected(self):
-        self.nickcount = {}
+        self.nickcount.clear()
         return znc.CONTINUE
 
     def OnUserPart(self, channel, message):
