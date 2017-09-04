@@ -128,6 +128,20 @@ class masshl(znc.Module):
 
             return znc.CONTINUE
 
+    def is_exempt(self, chan_user):
+        # Check the other user's status
+        if chan_user.HasPerm(ord(znc.CChan.Op)) and "op" in self.nvget("exempts"):
+            return True, "op"
+        elif chan_user.HasPerm(ord(znc.CChan.HalfOp)) and "hop" in self.nvget("exempts"):
+            return True, "hop"
+        elif chan_user.HasPerm(ord(znc.CChan.Voice)) and "voice" in self.nvget("exempts"):
+            return True, "voice"
+        else:
+            # Check configured exempts
+            for exempt_mask in self.nvget("exempts"):
+                if fnmatch(chan_user.GetHostMask().casefold(), exempt_mask.casefold()):
+                    return True, "matches {mask}".format(mask=exempt_mask)
+
     def tryban(self, inick, chan, count):
         chan_name = chan.GetName()
         inick_nick = inick.GetNick()  # TODO find a better name for this variable
@@ -136,97 +150,40 @@ class masshl(znc.Module):
         if chan.HasPerm(ord(znc.CChan.Op)) or \
                 chan.HasPerm(ord(znc.CChan.HalfOp)) or \
                 chan.HasPerm(ord(znc.CChan.Admin)):
-
-            # checking if the incoming user has op and whether or not we exempt
-            # ops
-            if inick.HasPerm(ord(znc.CChan.Op)) \
-                    and "op" in self.nvget("exempts"):
+            is_exempt, exempt_type = self.is_exempt(inick)
+            if is_exempt:
                 self.PutModule(
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (op)".format(
-                        nick=inick_nick,
-                        chan=chan_name,
-                        count=count,
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt ({exempt_type})".format(
+                        nick=inick_nick, chan=chan_name, count=count, exempt_type=exempt_type
                     )
                 )
 
                 self.sendtoops(
                     chan_name,
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (op)".format(
-                        nick=inick_nick, chan=chan_name, count=count
+                    "MHL from {nick} in {chan}. Count was {count}. User is exempt ({exempt_type})".format(
+                        nick=inick_nick, chan=chan_name, count=count, exempt_type=exempt_type
                     )
                 )
                 return znc.CONTINUE
 
-            elif inick.HasPerm(ord(znc.CChan.HalfOp)) \
-                    and "hop" in self.nvget("exempts"):
+            banmask = "*!*@" + inick.GetHost()
 
-                self.PutModule(
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (hop)".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
+            self.PutModule(
+                "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
+                    nick=inick_nick, chan=chan_name, count=count
                 )
+            )
 
-                self.sendtoops(
-                    chan_name,
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (hop)".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
+            self.sendtoops(
+                chan_name,
+                "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
+                    nick=inick_nick, chan=chan_name, count=count
                 )
-                return znc.CONTINUE
+            )
 
-            elif inick.HasPerm(ord(znc.CChan.Voice)) and "voice" in \
-                    self.nvget("exempts"):
-
-                self.PutModule(
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (voice)".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
-                )
-
-                self.sendtoops(
-                    chan_name,
-                    "MHL from {nick} in {chan}. Count was {count}. User is exempt (voice)".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
-                )
-                return znc.CONTINUE
-
-            else:
-                # checking each mask exempt against the mask exempt list
-                for emask in self.nvget("mexempts"):
-                    if fnmatch(inick.GetHostMask().lower(), emask.lower()):
-                        self.PutModule(
-                            "MHL from {nick} in {chan}. Count was {count}. User is exempt (matches {mask})".format(
-                                nick=inick_nick, chan=chan_name, count=count, mask=emask
-                            )
-                        )
-
-                        self.sendtoops(
-                            chan_name,
-                            "MHL from {nick} in {chan}. Count was {count}. User is exempt (matches {mask})".format(
-                                nick=inick_nick, chan=chan_name, count=count, mask=emask
-                            )
-                        )
-                        return znc.CONTINUE
-
-                banmask = "*!*@" + inick.GetHost()
-
-                self.PutModule(
-                    "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
-                )
-
-                self.sendtoops(
-                    chan_name,
-                    "MHL from {nick} in {chan}. Count was {count}. Ban sent".format(
-                        nick=inick_nick, chan=chan_name, count=count
-                    )
-                )
-
-                self.PutIRC(
-                    self.nv["commands"].format(nick=inick_nick, chan=chan_name, mask=banmask, count=count)
-                )
+            self.PutIRC(
+                self.nv["commands"].format(nick=inick_nick, chan=chan_name, mask=banmask, count=count)
+            )
         else:
             self.PutModule(
                 "MHL from {nick} in {chan}. Count was {count}. We're not opped, no action taken".format(
