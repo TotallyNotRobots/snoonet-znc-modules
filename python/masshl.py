@@ -43,9 +43,8 @@ class masshl(znc.Module):
 
             # checks the message contents vs the list of nicks
             checkednicks = {nick for nick in nicks if nick in bmsg}
-            for ignnick in self.nvget("nickignore"):
-                if ignnick in checkednicks:
-                    checkednicks.remove(ignnick)
+            ignored_nicks = set(self.nvget("nickignore"))
+            checkednicks.difference_update(ignored_nicks)
             count = len(checkednicks)
             # Check the current count against the configured max, if its the
             # same or bigger, send configured commands
