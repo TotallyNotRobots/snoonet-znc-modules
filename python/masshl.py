@@ -60,24 +60,17 @@ class masshl(znc.Module):
                 # checking if we've seen this nick in this channel before,
                 # if not, check if they match anything in the mask exempt list,
                 #  if not, initialise their var and set it to 1
+                if self.checkmexempts(inick):
+                    return znc.CONTINUE
+
                 if not self.nickcount.get(nick):
-                    if self.nvget("mexempts") and self.checkmexempts(inick):
-                        return znc.CONTINUE
-                    else:
-                        self.nickcount[nick] = {chan: {"count": count,
-                                                       "lping": time.time()}}
-                        if self.nvget("debug"):
-                            self.PutModule("1 seen        {nick} {chan}".format(nick=nick, chan=chan))
-
+                    self.nickcount[nick] = {chan: {"count": count, "lping": time.time()}}
+                    if self.nvget("debug"):
+                        self.PutModule("1 seen        {nick} {chan}".format(nick=nick, chan=chan))
                 elif chan not in self.nickcount[nick]:
-                    if self.nvget("mexempts") and self.checkmexempts(inick):
-                        return znc.CONTINUE
-                    else:
-                        self.nickcount[nick][chan] = {"count": count,
-                                                      "lping": time.time()}
-                        if self.nvget("debug"):
-                            self.PutModule("1 seen      {nick} {chan}".format(nick=nick, chan=chan))
-
+                    self.nickcount[nick][chan] = {"count": count, "lping": time.time()}
+                    if self.nvget("debug"):
+                        self.PutModule("1 seen      {nick} {chan}".format(nick=nick, chan=chan))
                 # if we have seen them, increment their count
                 elif self.nickcount[nick][chan]:
                     # check the time against the configured timeout, and delete
@@ -199,17 +192,16 @@ class masshl(znc.Module):
                 )
 
     def checkmexempts(self, nick):
-        ecount = 0 
+        if not self.nvget("mexempts"):
+            return False
+
         for exempt in self.nvget("mexempts"):
             if fnmatch(nick.GetHostMask().lower(), exempt.lower()):
                 if self.nvget("debug"):
                     self.PutModule("fnmatch       ({}, {})".format(
                         nick.GetHostMask().lower(), exempt.lower()))
                 return True
-            else:
-                ecount += 1
-                if ecount >= len(self.nvget("mexempts")):
-                    return False
+        return False
 
     # actions get included in scanning
     def OnChanAction(self, inick, ichan, msg):
