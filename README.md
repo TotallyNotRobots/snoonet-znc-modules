@@ -1,6 +1,7 @@
 # Snoonet ZNC Modules
 
 - [Setup](#setup)
+- [AutoExpire](#autoexpire)
 - [CheckConfig](#checkconfig)
 - [ForceChan](#forcechan)
 - [Push](#push)
