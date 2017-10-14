@@ -113,7 +113,7 @@ class autoexpire(SnooModule):
 
         return znc.CONTINUE
 
-    @command("noexpire", 2)
+    @command("noexpire", 2, admin=True)
     def cmd_noexpire(self, username, state):
         """Configures the NoExpire flag for a user
         <user> <state>"""

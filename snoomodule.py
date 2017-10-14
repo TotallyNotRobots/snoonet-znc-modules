@@ -10,10 +10,10 @@ from operator import attrgetter
 
 import znc
 
-Command = namedtuple("Command", "name func min_args max_args syntax help_msg include_cmd")
+Command = namedtuple("Command", "name func min_args max_args syntax help_msg include_cmd admin")
 
 
-def command(name, min_args=0, max_args=None, syntax=None, help_msg=None, include_cmd=False):
+def command(name, min_args=0, max_args=None, syntax=None, help_msg=None, include_cmd=False, admin=False):
     def _decorate(func):
         nonlocal help_msg, syntax
         try:
@@ -37,7 +37,7 @@ def command(name, min_args=0, max_args=None, syntax=None, help_msg=None, include
             handlers = []
             func._cmd_handlers = handlers
 
-        handlers.append(Command(name, func, min_args, max_args, syntax, help_msg, include_cmd))
+        handlers.append(Command(name, func, min_args, max_args, syntax, help_msg, include_cmd, admin))
         return func
 
     return _decorate
@@ -83,6 +83,11 @@ class SnooModule(znc.Module):
         if not cmd:
             self.PutModule("Unknown command")
             return
+
+        user = self.GetUser()
+
+        if cmd.admin and not user.IsAdmin():
+            self.PutModule("Permission denied")
 
         if len(args) < cmd.min_args:
             self.PutModule("Invalid arguments for command")
