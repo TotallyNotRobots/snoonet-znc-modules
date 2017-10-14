@@ -28,6 +28,23 @@ All commands should be sent to `*checkconfig` as a private message
 
 ---
 
+
+## AutoExpire
+
+Automatically deletes users' accounts that have been inactive for more than the configured time.
+Ignores ZNC admins, online users, and anyone with the NoExpire flag set to true.
+
+### Commands
+
+`noexpire <user> <state>` - Sets the noexpire flag on a user
+
+### Arguments
+
+`[expire_time] [expire_cycle]`
+- `expire_time` is the amount of time a user's account can be inactive before being deleted (default: `30d`). Set `expire_time` to `0` to disable expiry.
+- `expire_cycle` is how often to check for expired users (default: `1h`). All times are specified in `NyNwNdNmNs` format (eg. `1y2d3h` = 1 year, 2 days, 3 hours, `90d` = 90 days, `2w` = 2 weeks, `5m` = 5 minutes)
+
+
 ## CheckConfig
 
 Checks that various options are configured for all users.
