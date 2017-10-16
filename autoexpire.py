@@ -113,22 +113,50 @@ class autoexpire(SnooModule):
 
         return znc.CONTINUE
 
-    @command("noexpire", 2, admin=True)
-    def cmd_noexpire(self, username, state):
-        """Configures the NoExpire flag for a user
-        <user> <state>"""
-        flag = parse_bool_flag(state)
-        if flag is None:
-            return "Invalid state '{}'".format(state)
+    def OnEmbeddedWebRequest(self, sock, page_name, tmpl):
+        if page_name != "webadmin/user" or not sock.GetSession().IsAdmin():
+            return False
 
+        action = tmpl["WebadminAction"]
+        username = tmpl["Username"]
+        is_noexpire = username in self.noexpire
+        old = sock.GetParam("embed_autoexpire_old") == "1"
+        if action == "display":
+            tmpl["NoExpire"] = "1" if is_noexpire else "0"
+        elif action == "change" and sock.GetParam("embed_autoexpire_presented"):
+            if sock.GetParam("embed_autoexpire_noexpire") == "1":
+                self.set_noexpire(username, True)
+                sock.GetSession().AddSuccess("Set [{}] NoExpire".format(username))
+            elif old:
+                if is_noexpire:
+                    sock.GetSession().AddSuccess("Unset [{}] NoExpire".format(username))
+                else:
+                    sock.GetSession().AddError("User [{}] is not set NoExpire".format(username))
+
+        return True
+
+    @command("noexpire", 1, 2, admin=True)
+    def cmd_noexpire(self, username, state=None):
+        """Configures the NoExpire flag for a user
+        <user> [state]"""
         user = self.znc_core.FindUser(username)
 
         if user:
-            self.set_noexpire(user.GetUserName(), flag)
-            if flag:
-                return "NoExpire = true"
-            else:
-                return "NoExpire = false"
+            if state is None:
+                return "NoExpire = {}".format("true" if user.GetUserName() in self.noexpire else "false")
+
+            flag = parse_bool_flag(state)
+            if flag is None:
+                return "Invalid state '{}'".format(state)
+
+            user = self.znc_core.FindUser(username)
+
+            if user:
+                self.set_noexpire(user.GetUserName(), flag)
+                if flag:
+                    return "NoExpire = true"
+                else:
+                    return "NoExpire = false"
         else:
             return "User \"{}\" not found".format(username)
 
