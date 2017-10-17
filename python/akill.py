@@ -28,7 +28,7 @@ def convert_table(data, headers):
 
     for row in data:
         table.AddRow()
-        for i, value in row:
+        for i, value in enumerate(row):
             table.SetCell(headers[i], value)
 
     return table
