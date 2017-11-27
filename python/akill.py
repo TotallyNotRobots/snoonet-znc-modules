@@ -224,7 +224,9 @@ class akill(znc.Module):
             else:
                 parts[-1] += char
 
-        if not parts[0]:
+        parts[:] = filter(None, parts)
+
+        if ' ' not in parts[0]:
             parts[0] += " day"
 
         return ', '.join(parts)
