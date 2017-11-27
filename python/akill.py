@@ -158,6 +158,9 @@ class akill(znc.Module):
     def del_reason(self, args):
         name = args.strip().lower()
 
+        if not name:
+            return "Missing required parameter: name"
+
         if name not in self.reasons:
             return "Unknown reason."
 
