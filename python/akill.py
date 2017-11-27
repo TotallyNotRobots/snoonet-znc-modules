@@ -76,8 +76,8 @@ class akill(znc.Module):
             fmt = self.reasons[reason]
             try:
                 out = fmt.format_map(data)
-            except LookupError:
-                self.PutModNotice("Missing required parameter")
+            except LookupError as e:
+                self.PutModNotice("Missing required parameter: {}".format(e))
             else:
                 self.do_akill(nick, time, out)
         else:
