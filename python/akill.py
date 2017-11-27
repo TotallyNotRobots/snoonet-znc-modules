@@ -64,6 +64,7 @@ class akill(znc.Module):
             "nick": nick,
             "text": text,
             "reason": reason,
+            "trail": self.trail,
         }
 
         if reason[0] == "#":
