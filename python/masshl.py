@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 import znc
 
 
-# VER: 1.7 - added the ability to set opchans,
+# VER: 1.7.1 - fixed a bug with the exempt checks
 # which get status updates like the user does
 
 
@@ -145,6 +145,7 @@ class masshl(znc.Module):
             for exempt_mask in self.nvget("exempts"):
                 if fnmatch(chan_user.GetHostMask().casefold(), exempt_mask.casefold()):
                     return True, "matches {mask}".format(mask=exempt_mask)
+        return False, ""
 
     def tryban(self, inick, chan, count):
         chan_name = chan.GetName()
