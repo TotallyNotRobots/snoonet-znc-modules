@@ -51,7 +51,13 @@ class snofilter(znc.Module):
         cmd_fmt = ":*{window}!snofilter@znc.in {msg_type} {cur_nick} :{message}"
         cmd_msg = partial(cmd_fmt.format, cur_nick=cur_nick, message=message)
         sno_settings = [s for s in self.sno_settings if s['type'].lower() == snotype]
-        for settings in (sno_settings or [{}]):
+        if not sno_settings:
+            settings = {"type": snotype}
+            self.sno_settings.append(settings)
+            sno_settings = [settings]
+            self.save_settings()
+
+        for settings in sno_settings:
             self.PutUser(cmd_msg(
                 window=settings.get('window', snotype),
                 msg_type=settings.get('msg_type', DEFAULT_MSG_TYPE)
