@@ -90,7 +90,6 @@ class akill(znc.Module):
     if znc.VersionMajor == 1 and znc.VersionMinor >= 7:
         def OnUserRawMessage(self, msg):
             if msg.GetCommand().upper() != "AKILL":
-                self.PutModule("jumping out")
                 return znc.CONTINUE
             params = self.params_from_msg(msg)
             if len(params) < 3:
@@ -105,7 +104,6 @@ class akill(znc.Module):
 
     if znc.VersionMajor == 1 and znc.VersionMinor < 7:
         def OnUserRaw(self, linecs):
-            self.PutModule("OLD")
             line = linecs.s.split()
             cmd = line[0].lower()
             if cmd != "akill":
