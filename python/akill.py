@@ -42,18 +42,20 @@ class akill(znc.Module):
         self.load_conf()
         return True
 
-    def OnUserRaw(self, linecs):
-        line = linecs.s.split()
-        cmd = line[0].lower()
-        if cmd != "akill":
-            return znc.CONTINUE
+    @staticmethod
+    def params_from_msg(msg):
+        i = 0
+        params = []
+        while True:
+            param = msg.GetParam(i)
+            if param == '':
+                break
+            params.append(param)
+            i += 1
+        return params
 
-        if len(line) < 4:
-            # too short, respond with error as a notice
-            self.send_usage()
-            return znc.HALT
-
-        _, nick, time, reason, *address = line
+    def parse_akill(self, nick, time, reason, address):
+        address = ", ".join(address)
         reason = reason.lower()
         text = " ".join(address)
         address = ', '.join(address) or nick
@@ -71,6 +73,7 @@ class akill(znc.Module):
             reason = "evasion"
         elif reason == "evasion":
             self.PutModNotice("You must specify a channel as the reason when banning for evasion.")
+            return znc.HALT
 
         if reason in self.reasons:
             fmt = self.reasons[reason]
@@ -84,6 +87,35 @@ class akill(znc.Module):
             self.send_usage()
 
         return znc.HALT
+    if znc.VersionMajor == 1 and znc.VersionMinor >= 7:
+        def OnUserRawMessage(self, msg):
+            if msg.GetCommand().upper() != "AKILL":
+                return znc.CONTINUE
+            params = self.params_from_msg(msg)
+            if len(params) < 3:
+                # too few args, send usage
+                self.PutModNotice("/akill requires at least three arguments")
+                self.send_usage()
+                return znc.CONTINUE
+
+            nick, time, reason, *address = params
+
+            return self.parse_akill(nick, time, reason, address)
+
+    if znc.VersionMajor == 1 and znc.VersionMinor < 7:
+        def OnUserRaw(self, linecs):
+            line = linecs.s.split()
+            cmd = line[0].lower()
+            if cmd != "akill":
+                return znc.CONTINUE
+
+            if len(line) < 4:
+                # too short, respond with error as a notice
+                self.send_usage()
+                return znc.CONTINUE
+
+            _, nick, time, reason, *address = line
+            return self.parse_akill(nick, time, reason, address)
 
     def OnModCommand(self, text):
         cmd, _, args = str(text).partition(' ')
