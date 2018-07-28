@@ -59,7 +59,7 @@ class push(znc.Module):
         def OnPrivNoticeMessage(self, msg):
             current_server = self.GetNetwork().GetIRCServer()
             nick, text, chan = self.convertMessageToParts(msg)
-            if nick.GetNick() != current_server:
+            if nick.GetNick() != str(current_server):
                 self.check_contents(nick, text, chan)
 
     else:
