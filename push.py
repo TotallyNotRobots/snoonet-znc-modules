@@ -42,21 +42,41 @@ def command(name, min_args=0, max_args=None, syntax=None, help_msg=None, include
 class push(znc.Module):
     module_types = [znc.CModInfo.NetworkModule]
     description = "PushBullet notifications"
+    if znc.VersionMajor == 1 and znc.VersionMinor >= 7:
+        @staticmethod
+        def convertMessageToParts(msg):
+            return msg.GetNick(), msg.GetText(), msg.GetChan()
 
-    def OnChanMsg(self, nick, channel, message):
-        self.check_contents(nick, message, channel)
+        def OnChanTextMessage(self, msg):
+            self.check_contents(*self.convertMessageToParts(msg))
 
-    def OnChanNotice(self, nick, channel, message):
-        self.check_contents(nick, message, channel)
+        def OnChanNoticeMessage(self, msg):
+            self.check_contents(*self.convertMessageToParts(msg))
 
-    def OnPrivMsg(self, nick, message):
-        self.check_contents(nick, message)
+        def OnPrivTextMessage(self, msg):
+            self.check_contents(*self.convertMessageToParts(msg))
 
-    def OnPrivNotice(self, nick, message):
-        current_server = self.GetNetwork().GetIRCServer()
-        # Ignore any server notices
-        if nick.GetNick() != str(current_server):
+        def OnPrivNoticeMessage(self, msg):
+            current_server = self.GetNetwork().GetIRCServer()
+            nick, text, chan = self.convertMessageToParts(msg)
+            if nick.GetNick() != current_server:
+                self.check_contents(nick, text, chan)
+
+    else:
+        def OnChanMsg(self, nick, channel, message):
+            self.check_contents(nick, message, channel)
+
+        def OnChanNotice(self, nick, channel, message):
+            self.check_contents(nick, message, channel)
+
+        def OnPrivMsg(self, nick, message):
             self.check_contents(nick, message)
+
+        def OnPrivNotice(self, nick, message):
+            current_server = self.GetNetwork().GetIRCServer()
+            # Ignore any server notices
+            if nick.GetNick() != str(current_server):
+                self.check_contents(nick, message)
 
     def check_contents(self, nick, message, channel=None):
         if not self.is_enabled:
