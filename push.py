@@ -45,18 +45,23 @@ class push(znc.Module):
 
     def OnChanMsg(self, nick, channel, message):
         self.check_contents(nick, message, channel)
+        return znc.CONTINUE
 
     def OnChanNotice(self, nick, channel, message):
         self.check_contents(nick, message, channel)
+        return znc.CONTINUE
 
     def OnPrivMsg(self, nick, message):
         self.check_contents(nick, message)
+        return znc.CONTINUE
 
     def OnPrivNotice(self, nick, message):
         current_server = self.GetNetwork().GetIRCServer()
         # Ignore any server notices
         if nick.GetNick() != str(current_server):
             self.check_contents(nick, message)
+
+        return znc.CONTINUE
 
     def check_contents(self, nick, message, channel=None):
         if not self.is_enabled:

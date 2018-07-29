@@ -17,10 +17,14 @@ class forcechan(znc.Module):
         if channel == chan:
             return znc.HALTCORE
 
+        return znc.CONTINUE
+
     def OnSendToIRC(self, line):
         if part in str(line):
             self.force_chan()
             return znc.HALTCORE
+
+        return znc.CONTINUE
 
     def force_chan(self):
         users = znc.CZNC.Get().GetUserMap()
