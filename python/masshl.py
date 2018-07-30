@@ -130,7 +130,7 @@ class masshl(znc.Module):
                 if self.nvget("debug"):
                     self.PutModule("cleared       {nick} {chan}".format(nick=nick, chan=chan))
 
-            return znc.CONTINUE
+        return znc.CONTINUE
 
     def is_exempt(self, chan_user):
         # Check the other user's status
@@ -217,7 +217,7 @@ class masshl(znc.Module):
 
     # actions get included in scanning
     def OnChanAction(self, inick, ichan, msg):
-        self.OnChanMsg(inick, ichan, msg)
+        return self.OnChanMsg(inick, ichan, msg)
 
     def OnNick(self, onick, newnick, vchans):
         oldnick = onick.GetNick()
@@ -279,6 +279,8 @@ class masshl(znc.Module):
                     if self.nickcount[nick] == {}:
                         del self.nickcount[nick]
                         self.PutModule("cleared empty nick")
+                        
+        return znc.CONTINUE
 
     def OnModCommand(self, command):
         cmd = command.split()
