@@ -55,7 +55,6 @@ class akill(znc.Module):
         return params
 
     def parse_akill(self, nick, time, reason, address):
-        address = ", ".join(address)
         reason = reason.lower()
         text = " ".join(address)
         address = ', '.join(address) or nick
